@@ -1,5 +1,7 @@
+﻿# coding=utf-8
 import numpy as np
 import sys
+from time import sleep
 # 物体有位置，体积（可为多面体），更新函数
 # 物体之间需要相互作用，
 # 1，物体内部处理相互作用
@@ -186,8 +188,84 @@ class BSPContainer(Container):
 			
 class World(Object):
 	def __init__(self):
-
-
+			pass
+class Getch:
+	def __init__(self):
+		import platform
+		ossys=platform.system()
+		if ossys=="Windows":
+			 self.call=getch.wncall
+		else:
+			self.call=getch.lxcall
+	@staticmethod
+	def wncall():
+		import msvcrt
+		return msvcrt.getch()
+	@staticmethod
+	def lxcall():
+		import sys, termios
+		fd = sys.stdin.fileno()
+		old_settings = termios.tcgetattr(fd)  
+		new = termios.tcgetattr(fd)
+		new[3] = new[3] & ~termios.ECHO
+		new[3] = new[3] & ~termios.ICANON
+		try:  
+			termios.tcsetattr(fd, termios.TCSADRAIN, new) 
+			ch = sys.stdin.read(1)  
+		finally:
+			termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)  
+		return ch
+	def __call__(self):
+		return self.call()
+import threading as td
+class InputThread(td.Thread):
+	def __init__(self):
+		self.gets=[]
+		self.on=True
+		td.Thread.__init__(self)
+	def run(self):
+		#getchar=Getch()
+		while self.on:
+			#a=getchar() 
+			a=sys.stdin.readline()[:-1]
+			if a == 'q':break;
+			if len(self.gets)<10:
+				self.gets.append(a)
+	def stop(self):
+		self.on=False
+	def input(self):
+		if len(self.gets)==0:
+			return None
+		out=self.gets[0]
+		del self.gets[0]
+		return out
+def test():
+	ins=InputThread()
+	ins.start()
+	while True:
+		get=ins.input()
+		print "get:",get
+		sleep(1)
+test()
+# design:
+type = sys.getfilesystemencoding()
+wait=0.9
+def show(cts,stp=1,wt=0.1,dcd=None):
+	for i in xrange(0,len(cts),stp):
+		ct=cts[i:i+stp]
+		if dcd is not None: ct=ct.decode(dcd).encode(type);
+		sys.stdout.write(ct)
+		tm.sleep(wt)
+def test123():
+	dst=10.0
+	chg=0.5
+	while dst>0:
+			show("敌人离你还有",stp=3,dcd="utf-8")
+			show(str(dst))
+			show("米",stp=3,dcd="utf-8")
+			print ""
+			tm.sleep(wait)
+			dst-=chg
 '''
 container:tree(parent)
 	def same_node
