@@ -194,9 +194,9 @@ class Getch:
 		import platform
 		ossys=platform.system()
 		if ossys=="Windows":
-			 self.call=getch.wncall
+			 self.call=Getch.wncall
 		else:
-			self.call=getch.lxcall
+			self.call=Getch.lxcall
 	@staticmethod
 	def wncall():
 		import msvcrt
@@ -219,43 +219,132 @@ class Getch:
 		return self.call()
 import threading as td
 class InputThread(td.Thread):
-	def __init__(self):
+	def __init__(self,test=False):
 		self.gets=[]
+		self.curr=''
 		self.on=True
+		self.cond=td.Condition()
 		td.Thread.__init__(self)
-	def run(self):
-		#getchar=Getch()
-		while self.on:
-			#a=getchar() 
-			a=sys.stdin.readline()[:-1]
-			if a == 'q':break;
-			if len(self.gets)<10:
-				self.gets.append(a)
-	def stop(self):
-		self.on=False
-	def input(self):
+		self.wait_sec=1
+		self.test=test
+		self.getch=False
+		self.getchar=Getch()
+	def put(self,cts):
+		if len(self.gets)<10:
+			self.gets.append(cts)
+	def pop(self):
 		if len(self.gets)==0:
 			return None
-		out=self.gets[0]
+		cts=self.gets[0]
 		del self.gets[0]
-		return out
+		return cts
+	def run(self):
+		getchar=Getch()
+		while self.on:
+			if self.getch:
+				ch=getchar() 
+				#print "by getchar:",ch
+			else:
+				ch=sys.stdin.readline()[:-1]
+				#print "by readline:",ch
+			self.curr=ch
+			with self.cond:
+				self.notify=True
+				self.cond.notify()
+				self.put(ch)
+			if self.test and ch == 'q':break;
+	@staticmethod
+	def thrun(self):
+		if self.getch:
+			ch=self.getchar() 
+		else:
+			ch=sys.stdin.readline()[:-1]
+		self.curr=ch
+		with self.cond:
+			self.notify=True
+			self.cond.notify()
+			self.put(ch)
+	def stop(self):
+		self.on=False
+	def single_start(self,getch=False):
+		self.getch=getch
+		tmpthd=td.Thread(target=InputThread.thrun, args=(self,))
+		tmpthd.start()
+	def input(self,time_out=True):
+		wait_sec=self.wait_sec
+		if time_out==False:
+			wait_sec=None
+		with self.cond:
+			self.notify=False
+			p=self.pop()
+			if p is not None:
+				return p
+			self.cond.wait(wait_sec)
+			return self.pop()
 def test():
-	ins=InputThread()
+	ins=InputThread(True)
 	ins.start()
 	while True:
 		get=ins.input()
 		print "get:",get
-		sleep(1)
-test()
-# design:
-type = sys.getfilesystemencoding()
+
+def testst():
+	ins=InputThread(True)
+	ins.start()
+	cts="按回车键来进行操作\n"
+	while True:
+		show(cts,coding='utf-8')
+		get=ins.input()
+		if get is None:
+			continue
+		sys.stdout.write(":")
+		get=ins.input(time_out=False)
+		print "order:",get
+		if get=='quit' or get == 'exit':
+			break
+def tests():
+	ins=InputThread(True)
+	#ins.start()
+	cts="按回车键来进行操作\n"
+	crt=True
+	while True:
+		if crt:
+			ins.single_start(getch=True);
+		show(cts,coding='utf-8')
+		get=ins.input()
+		if get is None:
+			crt=False
+			continue
+		crt=True
+		sys.stdout.write(":")
+		ins.single_start(getch=False)
+		get=ins.input(time_out=False)
+		print "order:",get
+		if get=='quit' or get == 'exit':
+			break
 wait=0.9
-def show(cts,stp=1,wt=0.1,dcd=None):
-	for i in xrange(0,len(cts),stp):
-		ct=cts[i:i+stp]
-		if dcd is not None: ct=ct.decode(dcd).encode(type);
-		sys.stdout.write(ct)
-		tm.sleep(wt)
+import sys
+def show(context,step=1,wait=0.1,coding=sys.getfilesystemencoding()):
+	from time import sleep
+	if coding is not None:
+		context=context.decode(coding).encode('gbk')
+	else:
+		context=context.encode('gbk')
+	ct_mx='\x7f'
+	tp=sys.getfilesystemencoding()
+	i=0
+	while i < len(context):
+		c=context[i]
+		if c<ct_mx:
+			sys.stdout.write(c)
+			i+=1
+		else:
+			ct=context[i:i+2]
+			ct=ct.decode('gbk').encode(tp)
+			sys.stdout.write(ct)
+			i+=2
+		if i % step == step-1:
+			sleep(wait)
 def test123():
 	dst=10.0
 	chg=0.5
