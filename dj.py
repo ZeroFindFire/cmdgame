@@ -361,15 +361,21 @@ class house:
 	# maps: {'time':'describe'}
 	# arr: [time by order]
 	# time format: hour:minite:sec
-	this=hourse
 	def __init__(self,maps,arrs):
 		self.maps=maps
 		self.times=arrs
 	def describe(self,time):
 		maps=self.maps
 		times=self.times 
-		find=binsearch(times,0,len(times)-1,self.timecmp,time)
-		if 
+		start,end=binsearch(times,0,len(times)-1,self.timecmp,time)
+		t1=times[start]
+		t2=times[end]
+		d1=self.dist(t1,time)
+		d2=self.dist(time,t2)
+		if d1>d2:
+			return maps[t2]
+		else:
+			return maps[t1]
 	@staticmethod
 	def dist(t1,t2):
 		t1=t1.split(":")
