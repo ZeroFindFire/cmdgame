@@ -1,4 +1,4 @@
-﻿# coding=utf-8
+# coding=utf-8
 import numpy as np
 import sys
 from time import sleep
@@ -217,14 +217,14 @@ class Getch:
 		return ch
 	def __call__(self):
 		return self.call()
-import threading as td
-class InputThread(td.Thread):
+import threading
+class InputThread(threading.Thread):
 	def __init__(self,test=False):
 		self.gets=[]
 		self.curr=''
 		self.on=True
-		self.cond=td.Condition()
-		td.Thread.__init__(self)
+		self.cond=threading.Condition()
+		threading.Thread.__init__(self)
 		self.wait_sec=1
 		self.test=test
 		self.getch=False
@@ -268,7 +268,7 @@ class InputThread(td.Thread):
 		self.on=False
 	def single_start(self,getch=False):
 		self.getch=getch
-		tmpthd=td.Thread(target=InputThread.thrun, args=(self,))
+		tmpthd=threading.Thread(target=InputThread.thrun, args=(self,))
 		tmpthd.start()
 	def input(self,time_out=True):
 		wait_sec=self.wait_sec
@@ -343,19 +343,53 @@ def show(context,step=1,wait=0.1,coding=sys.getfilesystemencoding()):
 			ct=ct.decode('gbk').encode(tp)
 			sys.stdout.write(ct)
 			i+=2
-		if i % step == step-1:
+		if (i+1) % step == 0:
 			sleep(wait)
-def test123():
-	dst=10.0
-	chg=0.5
-	while dst>0:
-			show("敌人离你还有",stp=3,dcd="utf-8")
-			show(str(dst))
-			show("米",stp=3,dcd="utf-8")
-			print ""
-			tm.sleep(wait)
-			dst-=chg
+def binsearch(arr,start,end,cmp,ele):
+	if end-start<2:
+		return (start,end)
+	md=(start+end)/2
+	jg=cmp(arr[md],ele)
+	if jg<0:
+		return binsearch(arr,start,md-1,cmp,ele)
+	elif jg>0:
+		return binsearch(arr,md+1,end,cmp,ele)
+	else:
+		return (md,md)
+
+class house:
+	# maps: {'time':'describe'}
+	# arr: [time by order]
+	# time format: hour:minite:sec
+	this=hourse
+	def __init__(self,maps,arrs):
+		self.maps=maps
+		self.times=arrs
+	def describe(self,time):
+		maps=self.maps
+		times=self.times 
+		find=binsearch(times,0,len(times)-1,self.timecmp,time)
+		if 
+	@staticmethod
+	def dist(t1,t2):
+		t1=t1.split(":")
+		t1=(int(t1[0])*60+int(t1[1]))*60+int(t1[2])
+		t2=(int(t2[0])*60+int(t2[1]))*60+int(t2[2])
+		return t2-t1
+	@staticmethod
+	def timecmp(t1,t2):
+		if t1==t2:
+			return 0
+		elif t1<t2:
+			return -1
+		else:
+			return 1
+class world:
+	def __init__(self):
+		self.maps=[]
 '''
+可描述场景
+不同地点，时间有不同描述
 container:tree(parent)
 	def same_node
 object:
