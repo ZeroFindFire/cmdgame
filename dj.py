@@ -349,7 +349,8 @@ def binsearch(arr,start,end,cmp,ele):
 	if end-start<2:
 		return (start,end)
 	md=(start+end)/2
-	jg=cmp(arr[md],ele)
+	jg=cmp(ele,arr[md])
+	# print "cmp:",md,arr[md],ele,jg
 	if jg<0:
 		return binsearch(arr,start,md-1,cmp,ele)
 	elif jg>0:
@@ -357,39 +358,118 @@ def binsearch(arr,start,end,cmp,ele):
 	else:
 		return (md,md)
 
-class house:
+def select_sort(arrs,cmp):
+	pass
+	l=len(arrs)
+	for i in xrange(l):
+		id=i 
+		for j in xrange(i+1,l):
+			if cmp(arrs[j],arrs[id])<0:
+				id=j
+		tmp=arrs[i]
+		arrs[i]=arrs[id]
+		arrs[id]=tmp 
+	return arrs
+class Place:
 	# maps: {'time':'describe'}
 	# arr: [time by order]
 	# time format: hour:minite:sec
-	def __init__(self,maps,arrs):
+	def __init__(self,maps):
 		self.maps=maps
+		arrs=[]
+		for key in maps:
+			arrs.append(key)
+		select_sort(arrs,self.timecmp)
 		self.times=arrs
 	def describe(self,time):
 		maps=self.maps
 		times=self.times 
 		start,end=binsearch(times,0,len(times)-1,self.timecmp,time)
+		# print start,end
 		t1=times[start]
 		t2=times[end]
 		d1=self.dist(t1,time)
 		d2=self.dist(time,t2)
+		if start == len(times)-1 and end == start:
+			end=0
+			t2=times[end]
+			d2=self.dist(time,t2)
+			d2+=self.dist("00:00:00","24:00:00")
 		if d1>d2:
 			return maps[t2]
 		else:
 			return maps[t1]
 	@staticmethod
 	def dist(t1,t2):
-		t1=t1.split(":")
-		t1=(int(t1[0])*60+int(t1[1]))*60+int(t1[2])
-		t2=(int(t2[0])*60+int(t2[1]))*60+int(t2[2])
+		t1=Place.str2time(t1)
+		t2=Place.str2time(t2)
 		return t2-t1
 	@staticmethod
+	def str2time(time):
+		t=time.split(":")
+		return (int(t[0])*60+int(t[1]))*60+int(t[2])
+	@staticmethod
+	def time2str(time):
+		sec=time%60
+		time/=60
+		mn=time%60
+		hour=time/60
+		return "%d:%d:%d"%(hour,mn,sec)
+	@staticmethod
 	def timecmp(t1,t2):
+		t1=Place.str2time(t1)
+		t2=Place.str2time(t2)
 		if t1==t2:
 			return 0
 		elif t1<t2:
 			return -1
 		else:
 			return 1
+maps={	"00:00:00":"月亮高悬挂空中，乌云环绕，夜色幽深，一片寂静",
+		"1:00:00":"乌云遮蔽了月亮，周围变的沉闷",
+		"2:00:00":"雨淅淅沥沥的下着，树林里发出“沙沙”的声响",
+		"3:00:00":"大雨倾盆，“噼里啪啦”的打在树林中，雷声阵阵",
+		"5:00:00":"雨势渐小，地上泥泞，布满水坑",
+		"6:00:00":"雨淅淅沥沥的下着，四周一片安静",
+		"7:30:00":"夜色渐渐隐去，周围渐渐清晰，天上灰蒙蒙一片，雨依然在下着",
+		"9:00:00":"阳光透过云层照射下来，雨越下越小",
+		"10:00:00":"太阳高照，四周遍布着水坑",
+		"12:00:00":"太阳高照，天气炎热",
+		"17:00:00":"太阳挂在西边，火烧云染红半边天，天气变得不那么炎热",
+		"19:00:00":"月亮挂在东边，天空慢慢暗了下来",
+		"20:00:00":"月亮挂在东边，四周暗淡，寂静",
+		"22:00:00":"月亮高挂，四周寂静"}
+arrs=[]
+for key in maps:
+	arrs.append(key)
+pl=Place(maps)
+out=pl.describe
+select_sort(arrs,Place.timecmp)
+import random
+def randtime():
+	sec=int(random.random()*61)
+	mn=int(random.random()*61)
+	hour=int(random.random()*24)
+	return "%d:%d:%d"%(hour,mn,sec)
+def randsec(rang,start_time):
+	sec=int(random.random()*3600*24*rang)
+	t=Place.str2time(start_time)+sec
+	t%=3600*24
+	return Place.time2str(t)
+start_time=randtime()
+rang=0.1
+def destest():
+	global start_time
+	start_time=randsec(rang,start_time)
+	print "time:",start_time 
+	print pl.describe(start_time).decode("utf-8")
+wt=1.0
+def testpl():
+	from time import sleep
+	global wt
+	while True:
+		destest()
+		sleep(wt)
 class world:
 	def __init__(self):
 		self.maps=[]
