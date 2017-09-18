@@ -324,12 +324,16 @@ def tests():
 			break
 wait=0.9
 import sys
-def show(context,step=1,wait=0.1,coding=sys.getfilesystemencoding()):
+def show():
+	pass
+show.coding='utf-8'
+def show(context,step=1,wait=0.1,decode=True,coding=None):
 	from time import sleep
-	if coding is not None:
-		context=context.decode(coding).encode('gbk')
-	else:
-		context=context.encode('gbk')
+	if decode:
+		if coding is not None:
+			context=context.decode(coding).encode('gbk')
+		else:
+			context=context.decode(show.coding).encode('gbk')
 	ct_mx='\x7f'
 	tp=sys.getfilesystemencoding()
 	i=0
@@ -492,3 +496,26 @@ world:
 	water: blocks, 
 	
 '''
+class Describe:
+	def relPos(main,obj):
+		return "前方，后方，左边，右边，夹杂，里面，左前方，右前方，左后方，右后方"
+	def detailRelPos(main,obj):
+		return "前方5米处"
+
+'''
+容器包含物体和容器
+几个同类型并且相距较近的物体组合成容器（几个，一片，树林，森林）
+有的容器包含描述，有的描述所包含的物体
+物体描述受环境以及自身状态影响：环境主要为天气？（晴天，雨天，白天黑夜，寒冷，炎热，
+normal：树林静静悄悄的。
+rain：雨水打在树叶上，哗啦啦的响着
+snow：树上积满了雪，一片雪白
+
+
+'''
+class Object:
+	def __init__(self):
+		self.pas=0
+class Place:
+	def __init__(self):
+		self.contain=[]
