@@ -324,16 +324,14 @@ def tests():
 			break
 wait=0.9
 import sys
-def show():
-	pass
-show.coding='utf-8'
+Coding='utf-8'
 def show(context,step=1,wait=0.1,decode=True,coding=None):
 	from time import sleep
 	if decode:
 		if coding is not None:
 			context=context.decode(coding).encode('gbk')
 		else:
-			context=context.decode(show.coding).encode('gbk')
+			context=context.decode(Coding).encode('gbk')
 	ct_mx='\x7f'
 	tp=sys.getfilesystemencoding()
 	i=0
@@ -347,7 +345,7 @@ def show(context,step=1,wait=0.1,decode=True,coding=None):
 			ct=ct.decode('gbk').encode(tp)
 			sys.stdout.write(ct)
 			i+=2
-		if (i+1) % step == 0:
+		if step>0 and (i+1) % step == 0:
 			sleep(wait)
 def binsearch(arr,start,end,cmp,ele):
 	if end-start<2:
@@ -510,9 +508,215 @@ class Describe:
 normal：树林静静悄悄的。
 rain：雨水打在树叶上，哗啦啦的响着
 snow：树上积满了雪，一片雪白
+console农场：
+几块可种植的土地，一袋种子（随机），一个农民（你），一栋屋子（一个厨房，一个地下储藏室，一个储物间，一间卧室）
+更简单化：
+几块可种植土地，一袋随机种子，一个农民（你），一口井，一个水缸（存水），
+	屋子【一个卧室（睡觉），一个厨房（将食物变为熟食或将冷食加热），一个储藏室（存放农产品等）】，
+	一个探索地（可选择探索，可发现种子），
+	一辆牛车（可装载货物），
+	农产品收购点，种子售卖点
+	工具：
+		锄头：锄草，开荒
+		水桶：打水，灌溉
+		水瓢：装水，灌溉
+		锅：装东西，可被加热
+		灶台：放置锅，将热量集中上升
+		打火石：可点燃易燃物品
+		火绳：易燃物品
+		艾草：易燃物品
 
-
+基本：可种植土地
 '''
+class Describe:
+	@staticmethod
+	def dirstr(vec):
+		out=""
+		if vec is None:return out;
+		x,y=vec[0],vec[1]
+		if x>0:
+			out+="东"
+		elif x<0:
+			out+="西"
+		if y>0:
+			out+="北"
+		elif y<0:
+			out+="南"
+		return out
+
+	@staticmethod
+	def numstr(num,unit):
+		if num<5:
+			return str(num)+unit
+		elif num<10:
+			return "几"+unit
+		elif num<20:
+			return "十几"+unit
+		elif num<100:
+			return "很多"
+		elif num<1000:
+			return "大量"
+		else:
+			return "数不清的"
+	WaterDecrease=1.0/100.0
+class Plant:
+	Fruit=0
+	Seed=1
+	Seeding=2
+	Young=3
+	Flower=4
+	Bear=5
+	Old=6
+	@staticmethod
+	def state_describe(state):
+		dest={Plant.Fruit:"果子",Plant.Seed:"种子",Plant.Seeding:"幼苗",
+			Plant.Young:"植株",Plant.Flower:"开花",Plant.Bear:"结果",Plant.Old:"老"}
+		return dest[state]
+	def __init__(self,num,area):
+		self.others=[]
+		self.num=num
+		self.age=0.0
+		self.state=self.Seed
+		self.area=area
+	def name(self):
+		return "不知名植物"
+	def run(sec,place,weather):
+		self.age+=sec
+		for plant in self.others:
+			plant.run(sec,place,weather)
+	def seed(self,plt):
+		if plt.age!=self.age:
+			self.others.append(plt)
+		else:
+			self.area+=plt.area
+			self.num+=plt.num
+			for p in plt.others:
+				self.others.append(p)
+	def same(self,plant):
+		return plant.__class__.__name__==self.__class__.__name__
+	def waterSave(self):
+		return 0.1
+	def describe(self,place,weather):
+		out=str(self.num)+"株"+str(int(self.age))+"岁的"+self.name()+self.state_describe(self.state)+"扎根在土中"
+		for other in self.others:
+			out+="，"+other.describe(place,weather)
+		return out
+class Weather:
+	def __init__(self):
+		self.temperature=0.0
+		self.rain=False
+		self.snow=False
+		self.wind=False
+		self.clouds=0.1
+		self.rainfall=0.0
+		self.windpower=0.0
+		self.winddirect=None
+		self.snowdown=0.0
+		self.sun=False
+		self.moon=False
+		self.sunshine=0.0
+		self.sunangle=0
+		self.moonangle=0
+		self.moonlight=0.0
+		self.stars=0.0
+	def describe_temp(self):
+		tmp=self.temperature
+		if tmp<-20.0:
+			return "世界像是被冻住了"
+		elif tmp<-10.0:
+			return "气温低的吓人"
+		elif tmp<0.0:
+			return "天寒地冻"
+		elif tmp<10.0:
+			return "天气有些寒冷"
+		elif tmp<20.0:
+			return "天气有些凉"
+		elif tmp<30.0:
+			return "天气适中"
+		elif tmp<30.0:
+			return "天有些热"
+		elif tmp<40.0:
+			return "天气炎热"
+		elif tmp<40.0:
+			return "周围像火炉一样"
+		else:
+			return "世界像是在燃烧"
+
+	def describe_wind(self):
+		if self.wind==False:
+			return ""
+		elif self.windpower<1.0:
+			return "微风轻轻吹拂"
+		else:
+			dct=Describe.dirstr(self.winddirect)
+			out=dct+"风"
+			if self.windpower<10.0:
+				return out+"阵阵吹过"
+			elif self.windpower<20.0:
+				return out+"猛烈地刮动"
+			else:
+				return out+"在呼啸"
+	def describe_rain(self):
+		if self.rain== False:
+			return ""
+		elif self.rainfall<1.0:
+			return "细雨濛濛"
+		elif self.rainfall<10.0:
+			return "雨淅淅沥沥的下着"
+		elif self.rainfall<21.0:
+			return "雨从天上打落"
+		elif self.rainfall<31.0:
+			return "大雨倾盆，电闪雷鸣"
+		else:
+			return "暴雨咆哮着扑来，雷声轰鸣，闪电撕裂天际"
+
+class Wheat(Plant):
+	def __init__(self):
+		Plant.__init__(self)
+		pass
+	def name(self):
+		return "小麦"
+	def run(sec,place,weather):
+		self.age+=sec
+class FarmPlace:
+	AreaFen=1.0/64
+	def __init__(self):
+		self.plants=[]
+		self.shape=[8,8]
+		self.water=1.0
+		self.rich=1.0
+	def area(self):
+		return self.shape[0]*self.shape[1]*self.AreaFen
+	def run(self,sec,weather):
+		water_save=0.0
+		for plant in self.plants:
+			plant.run(sec,self,weather)
+			water_save+=plant.waterSave()*plant.area/self.area
+		if weather.rain:
+			self.water+=weather.rainfall*self.area()*sec
+		elif weather.temperature>0.0:
+			water_dec=sec*self.area()*self.water*weather.water_down()*(1.0-water_save)
+			self.water-=water_dec
+	def plant(self,seed):
+		for plt in self.plants:
+			if plt.same(seed):
+				plt.seed(seed)
+				return
+		self.plants.append(seed)
+	def describe(self,weather):
+		if len(self.plants)==0:
+			return "地里空空荡荡"
+		out="地上长着"
+		plants=self.plants
+		l=len(plants)
+		for i in xrange(l-1):
+			out+=plants[i].name()+"、"
+		if l>1:
+			out+="和"
+		out+=plants[l-1].name()+"，"
+		for p in plants:
+			out+=p.describe(self,weather)+"，"
+		return out
 class Object:
 	def __init__(self):
 		self.pas=0
