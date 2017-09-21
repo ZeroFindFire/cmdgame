@@ -530,6 +530,11 @@ console农场：
 '''
 class Describe:
 	@staticmethod
+	def strcmb(a,b,point="，"):
+		if a is None or a=="":return b;
+		if b is None or b=="":return a;
+		return a+point+b;
+	@staticmethod
 	def dirstr(vec):
 		out=""
 		if vec is None:return out;
@@ -619,6 +624,57 @@ class Weather:
 		self.moonangle=0
 		self.moonlight=0.0
 		self.stars=0.0
+	def set_rain(self,rain,rainfall=0.0):
+		self.rain=rain
+		self.rainfall=rainfall
+	def set_wind(self,wind,windpower=0.0,winddirect=[0.0,0.0]):
+		self.wind=wind
+		self.windpower=windpower
+		self.winddirect=winddirect
+	def set_sun(self,sun,light=0.0,angle=0.0):
+		self.sun=sun
+		self.sunshine=light
+		self.sunangle=angle
+	def set_moon(self,moon,light=0.0,angle=0.0):
+		self.moon=moon
+		self.moonlight=light
+		self.moonangle=angle
+	def describe_sun(self):
+		if self.sun==False or self.sunshine==0.0:
+			return ""
+		out="太阳"
+		if self.sunangle<30.0:
+			out+="挂在东边"
+		elif self.sunangle>60.0:
+			out+="挂在西边"
+		else:
+			out+="高挂"
+		out+="，"
+		if self.sunshine<0.3:
+			out+="阳光柔和"
+		elif self.sunshine<0.6:
+			out+="阳光明媚"
+		else:
+			out+="阳光猛烈地照射下来"
+		return out;
+	def describe_moon(self):
+		if self.moon==False or self.moonlight==0.0:
+			return ""
+		out="月亮"
+		if self.moonangle<30.0:
+			out+="挂在东边"
+		elif self.moonangle>60.0:
+			out+="挂在西边"
+		else:
+			out+="挂在半空中"
+		out+="，"
+		if self.moonlight<0.3:
+			out+="月光微微洒落"
+		elif self.moonlight<0.6:
+			out+="月光皎洁"
+		else:
+			out+="月光明媚"
+		return out;
 	def describe_temp(self):
 		tmp=self.temperature
 		if tmp<-20.0:
@@ -641,7 +697,6 @@ class Weather:
 			return "周围像火炉一样"
 		else:
 			return "世界像是在燃烧"
-
 	def describe_wind(self):
 		if self.wind==False:
 			return ""
@@ -669,7 +724,12 @@ class Weather:
 			return "大雨倾盆，电闪雷鸣"
 		else:
 			return "暴雨咆哮着扑来，雷声轰鸣，闪电撕裂天际"
-
+	def describe(self):
+		out=self.describe_sun()+self.describe_moon();
+		out=Describe.strcmb(out,self.describe_temp())
+		out=Describe.strcmb(out,self.describe_wind())
+		out=Describe.strcmb(out,self.describe_rain())
+		return out
 class Wheat(Plant):
 	def __init__(self):
 		Plant.__init__(self)
@@ -685,19 +745,28 @@ class FarmPlace:
 		self.shape=[8,8]
 		self.water=1.0
 		self.rich=1.0
+	def area_left(self):
+		total=self.area()
+		for pt in self.plants:
+			total-=pt.area
+		return total
 	def area(self):
 		return self.shape[0]*self.shape[1]*self.AreaFen
+	def mArea(self):
+		return self.shape[0]*self.shape[1]
 	def run(self,sec,weather):
 		water_save=0.0
 		for plant in self.plants:
 			plant.run(sec,self,weather)
-			water_save+=plant.waterSave()*plant.area/self.area
+			water_save+=plant.waterSave()*plant.area/self.area()
 		if weather.rain:
-			self.water+=weather.rainfall*self.area()*sec
+			self.water+=weather.rainfall*self.mArea()*sec
 		elif weather.temperature>0.0:
-			water_dec=sec*self.area()*self.water*weather.water_down()*(1.0-water_save)
+			water_dec=sec*self.mArea()*self.water*weather.water_down()*(1.0-water_save)
 			self.water-=water_dec
 	def plant(self,seed):
+		if self.area_left()<seed.area:
+			return
 		for plt in self.plants:
 			if plt.same(seed):
 				plt.seed(seed)
