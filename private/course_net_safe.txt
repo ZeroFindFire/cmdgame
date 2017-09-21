@@ -1,0 +1,6 @@
+安全：机密性，完整性，可用性
+service interface：下一层服务层接口，为当前层提供服务
+peer to peerinterface：当前层接口，同一层接口
+带宽：Bandwidth
+延迟：la?
+带宽x延迟=网络上最大承载数据量
