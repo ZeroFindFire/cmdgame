@@ -547,6 +547,76 @@ console农场：
 	不包含太阳&月亮
 	其它因素增加所受影响：相邻天气块的相同因素诱使其同化
 '''
+def month(date):
+	months=[31,28,31,30,31,30,31,31,30,31,30,31];
+	cnt=0;
+	while date>0:
+		data-=months[cnt]
+		cnt+=1
+	return cnt
+spring="spring"
+summer="summer"
+autumn="autumn"
+winter="winter"
+def season(date):
+	mon=Weather.month(date)
+	if mon<3 or mon==12:
+		return winter;
+	elif mon<6:
+		return spring;
+	elif mon<9:
+		return summer;
+	else:
+		return autumn;
+date=0;
+year=0;
+clock=0;
+rain_mini=1.0
+rain_small=2.0
+rain_middle=5.0
+rain_big=10.0
+rain_huge=20.0
+class Scale:
+	mini,small,middle,big,huge="mini","small","middle","big","huge"
+	scales=["mini","small","middle","big","huge"]
+	@staticmethod
+	def scale(data,maps):
+		for s in Scale.scales:
+			if data<maps[s]:
+				return s
+		return Scale.scales[-1]
+'''
+data script:
+weather describe:
+	describe order
+	i.e:
+		sun,moon,rain,temperature,wind,snow
+	详细描述
+	简单描述
+
+'''
+rain_scale={
+	Scale.mini:1.0,
+	Scale.small:2.0,
+	Scale.middle:3.0,
+	Scale.big:5.0
+}
+
+def sun_angle(date,clock):
+	s=season(date)
+	sun_range={spring:(7,12+7),
+		summer:(6,12+7),
+		autumn:(7,12+7),
+		winter:(8,12+6)}
+	moon_range={spring:(12+7,24+6),
+		summer:(12+7,24+6),
+		autumn:(12+7,24+6),
+		winter:(12+7,24+6)}
+class Demo():
+	pass
+class Weather:
+	def __init__(self):
+		pass
 class Describe:
 	@staticmethod
 	def strcmb(a,b,point="，"):
