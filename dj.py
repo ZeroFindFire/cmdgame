@@ -352,11 +352,11 @@ def binsearch(arr,start,end,cmp,ele):
 		return (start,end)
 	md=(start+end)/2
 	jg=cmp(ele,arr[md])
-	# print "cmp:",md,arr[md],ele,jg
+	#print "cmp:",md,arr[md],ele,jg
 	if jg<0:
-		return binsearch(arr,start,md-1,cmp,ele)
+		return binsearch(arr,start,md,cmp,ele)
 	elif jg>0:
-		return binsearch(arr,md+1,end,cmp,ele)
+		return binsearch(arr,md,end,cmp,ele)
 	else:
 		return (md,md)
 
@@ -387,7 +387,7 @@ class Place:
 		maps=self.maps
 		times=self.times 
 		start,end=binsearch(times,0,len(times)-1,self.timecmp,time)
-		# print start,end
+		#print start,end
 		t1=times[start]
 		t2=times[end]
 		d1=self.dist(t1,time)
@@ -469,7 +469,9 @@ wt=1.0
 def testpl():
 	from time import sleep
 	global wt
+	import os
 	while True:
+		os.system("cls")
 		destest()
 		sleep(wt)
 class world:
@@ -547,27 +549,6 @@ console农场：
 	不包含太阳&月亮
 	其它因素增加所受影响：相邻天气块的相同因素诱使其同化
 '''
-def month(date):
-	months=[31,28,31,30,31,30,31,31,30,31,30,31];
-	cnt=0;
-	while date>0:
-		data-=months[cnt]
-		cnt+=1
-	return cnt
-spring="spring"
-summer="summer"
-autumn="autumn"
-winter="winter"
-def season(date):
-	mon=Weather.month(date)
-	if mon<3 or mon==12:
-		return winter;
-	elif mon<6:
-		return spring;
-	elif mon<9:
-		return summer;
-	else:
-		return autumn;
 date=0;
 year=0;
 clock=0;
@@ -618,19 +599,91 @@ weather describe:
 		小，中，大。。。
 	温度：
 		极冷，冷，寒。。。极热
-
+	雨淅淅沥沥的下着，风轻轻吹动，云层灰蒙蒙的，太阳挂在天上，阳光柔和，天气有些冷。
+	简单：
+	描述必须描述以及偏离正常值的数据：
+	雨，雷，闪电，过冷或过热，较大的风，光线过强或过弱，积云浓厚
+	匹配：寻找最多的匹配，将剩余的继续寻找最多的匹配，
 	level1:
 
 '''
-rain_scale={
-	Scale.mini:1.0,
-	Scale.small:2.0,
-	Scale.middle:3.0,
-	Scale.big:5.0
-}
+class Util:
+	@staticmethod
+	def inrange(rang,data):
+		return data >= rang[0] and data <= rang[1]
+class Cloud:
+	cloud_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	def __init__(self):
+		self.rate=0.0 # [0,1]
+class SunShine:
+	sun_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	sun_season={
+		Time.spring:0.9,
+		Time.summer:1.2,
+		Time.autumn:0.9,
+		Time.winter:0.7
+	}
+	def sunshine(angle,cloud,season):
 
-def sun_angle(date,clock):
-	s=season(date)
+
+
+class Weather:
+	rain_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	cloud_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	wind_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	sun_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	moon_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	light_scale={
+		Scale.mini:1.0,
+		Scale.small:2.0,
+		Scale.middle:3.0,
+		Scale.big:5.0
+	}
+	clouds=0.0
+	def __init__(self):
+		self.cloud=0.0 #[0,1]
+
+class Time:
+	spring="spring"
+	summer="summer"
+	autumn="autumn"
+	winter="winter"
+	months=[31,28,31,30,31,30,31,31,30,31,30,31];
 	sun_range={spring:(7,12+7),
 		summer:(6,12+7),
 		autumn:(7,12+7),
@@ -639,6 +692,74 @@ def sun_angle(date,clock):
 		summer:(12+7,24+6),
 		autumn:(12+7,24+6),
 		winter:(12+7,24+6)}
+	@staticmethod
+	def day_angle(rang,clock):
+		_hour=clock/3600.0
+		if Util.inrange(rang,clock):
+			return (clock-rang[0])/(rang[1]-rang[0])
+		elif Util.inrange(rang,clock+24):
+			return (clock+24-rang[0])/(rang[1]-rang[0])
+		else:
+			return None
+	def month(self):
+		date=self.date
+		cnt=0;
+		while date>0:
+			date-=self.months[cnt]
+			cnt+=1
+		return cnt
+	def vdate(date):
+		cnt=0;
+		while date>0:
+			date-=self.months[cnt]
+			cnt+=1
+		date+=self.months[cnt-1]
+		return (cnt,date)
+
+	def vtime(self):
+		clock=self.clock
+		sec=clock%60
+		clock/=60
+		mn=clock%60
+		hour=clock/60
+		return (hour,mn,sec)
+
+	def hour(self):
+		return 1.0*self.clock/3600
+
+	def season(self):
+		mon=self.month()
+		if mon<3 or mon==12:
+			return self.winter;
+		elif mon<6:
+			return self.spring;
+		elif mon<9:
+			return self.summer;
+		else:
+			return self.autumn;
+	def __init__(self):
+		self.clock=0
+		self.date=1
+		self.year=0
+	def update(self,sec):
+		self.clock+=clock
+		if self.clock>=3600*24:
+			cnt=self.clock/(3600*24)
+			self.clock-=3600*24*cnt
+			self.date+=cnt
+			if self.date>365:
+				tnc=self.date/365
+				self.date-=365*tnc
+				self.year+=tnc
+	def sun_angle(self):
+		s=season(self.date)
+		srange=self.sun_range(s)
+		return self.day_angle(srange,self.clock)
+	def moon_angle(self):
+		s=season(self.date)
+		mrange=self.moon_range(s)
+		return self.day_angle(mrange,self.clock)
+
 class Demo():
 	pass
 class Weather:
@@ -905,6 +1026,6 @@ class FarmPlace:
 class Object:
 	def __init__(self):
 		self.pas=0
-class Place:
+class Places:
 	def __init__(self):
 		self.contain=[]
