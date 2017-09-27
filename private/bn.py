@@ -51,7 +51,7 @@ class BatchNormalNet(LinkNet):
 			var=ins.var(axis=0)
 		else:
 			var=ins.var(axis=(0,2,3),keepdims=True)[0]
-		if self.E is None:
+		if self.cnt==0.0:
 			self.E=mean
 			self.Var=var
 			self.cnt+=num
@@ -95,6 +95,7 @@ class BatchNormalNet(LinkNet):
 		self.normal=None
 		return out_rvs
 	def learn(self,alpha,inv_n,chg_range=0.0):
+		self.cnt=0.0
 		inv_n*=-alpha;
 		self.gamma+=self.feedbacks_gamma*inv_n
 		self.beta+=self.feedbacks_beta*inv_n
