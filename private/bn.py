@@ -72,7 +72,6 @@ class BatchNormalNet(LinkNet):
 		self.outs=self.normal*self.gamma+self.beta
 		self.normal=None
 	def learn_reverse(self,reverse,first=True,chg_range=0.0,l2c=0.0):
-		self.outs=None
 		if first:
 			self.feedbacks_beta[:]=0
 			self.feedbacks_gamma[:]=0
@@ -92,6 +91,7 @@ class BatchNormalNet(LinkNet):
 			self.feedbacks_gamma+=l2c*self.gamma
 			self.feedbacks_beta+=l2c*self.beta
 		out_rvs=self.gamma*reverse
+		self.outs=[]
 		self.normal=None
 		return out_rvs
 	def learn(self,alpha,inv_n,chg_range=0.0):
