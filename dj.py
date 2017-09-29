@@ -2,6 +2,22 @@
 import numpy as np
 import sys
 from time import sleep
+"""
+目标：
+1，建立环境系统规则
+2，建立植物系统
+	建立植物与植物交互
+	建立植物与环境的交互
+3，建立物理规则
+4，建立动物系统
+	建立动物与环境系统交互
+	建立动物与植物交互
+	建立动物与动物交互
+4，建立交互系统
+5，建立小世界规则
+6，建立世界
+7，渲染氛围
+"""
 # 物体有位置，体积（可为多面体），更新函数
 # 物体之间需要相互作用，
 # 1，物体内部处理相互作用
@@ -72,17 +88,17 @@ class Box(PhyModel):
 		else:
 			return 0
 """
-sqrt(a^2-h^2)+sqrt(b^2-h^2)=c
-a2-h2=c2+(b2-h2)-2c.sqrt(b2-h2)
-2c.sqrt(b2-h2)=c2+b2-h2-a2+h2=c2+b2-a2
-4c2(b2-h2)=(c2+b2-a2)2
-b2-h2=(c2+b2-a2)2/4c2
-h2=b2-(c2+b2-a2)2/4c2
-=(4c2b2-(c2+b2-a2)2)/4c2
-=(2c2b2+2c2a2+2a2b2-(c4+b4+a4))/4c2
+	sqrt(a^2-h^2)+sqrt(b^2-h^2)=c
+	a2-h2=c2+(b2-h2)-2c.sqrt(b2-h2)
+	2c.sqrt(b2-h2)=c2+b2-h2-a2+h2=c2+b2-a2
+	4c2(b2-h2)=(c2+b2-a2)2
+	b2-h2=(c2+b2-a2)2/4c2
+	h2=b2-(c2+b2-a2)2/4c2
+	=(4c2b2-(c2+b2-a2)2)/4c2
+	=(2c2b2+2c2a2+2a2b2-(c4+b4+a4))/4c2
 
 
-(c2+b2-a2)2=(c2+b2)2-2a2(c2+b2)+a4=c4+2c2b2+b4+a4-2c2a2-2a2b2
+	(c2+b2-a2)2=(c2+b2)2-2a2(c2+b2)+a4=c4+2c2b2+b4+a4-2c2a2-2a2b2
 """
 def OrbCross(c1, c2):
 	dst=(c1.pos-c2.pos)**2
@@ -478,24 +494,23 @@ class world:
 	def __init__(self):
 		self.maps=[]
 '''
-可描述场景
-不同地点，时间有不同描述
-container:tree(parent)
-	def same_node
-object:
-	container
-a object refer to a container?
-util:
-	create(name,parmeters):object
-	destroy(object)
-object:
-	pass
-world:
-	sky: space, clouds, sky_livings, flying_animals
-	ground: blocks, 
-	water: blocks, 
-	
-'''
+	可描述场景
+	不同地点，时间有不同描述
+	container:tree(parent)
+		def same_node
+	object:
+		container
+	a object refer to a container?
+	util:
+		create(name,parmeters):object
+		destroy(object)
+	object:
+		pass
+	world:
+		sky: space, clouds, sky_livings, flying_animals
+		ground: blocks, 
+		water: blocks, 
+	'''
 class Describe:
 	def relPos(main,obj):
 		return "前方，后方，左边，右边，夹杂，里面，左前方，右前方，左后方，右后方"
@@ -503,52 +518,52 @@ class Describe:
 		return "前方5米处"
 
 '''
-容器包含物体和容器
-几个同类型并且相距较近的物体组合成容器（几个，一片，树林，森林）
-有的容器包含描述，有的描述所包含的物体
-物体描述受环境以及自身状态影响：环境主要为天气？（晴天，雨天，白天黑夜，寒冷，炎热，
-normal：树林静静悄悄的。
-rain：雨水打在树叶上，哗啦啦的响着
-snow：树上积满了雪，一片雪白
-console农场：
-几块可种植的土地，一袋种子（随机），一个农民（你），一栋屋子（一个厨房，一个地下储藏室，一个储物间，一间卧室）
-更简单化：
-几块可种植土地，一袋随机种子，一个农民（你），一口井，一个水缸（存水），
-	屋子【一个卧室（睡觉），一个厨房（将食物变为熟食或将冷食加热），一个储藏室（存放农产品等）】，
-	一个探索地（可选择探索，可发现种子），
-	一辆牛车（可装载货物），
-	农产品收购点，种子售卖点
-	工具：
-		锄头：锄草，开荒
-		水桶：打水，灌溉
-		水瓢：装水，灌溉
-		锅：装东西，可被加热
-		灶台：放置锅，将热量集中上升
-		打火石：可点燃易燃物品
-		火绳：易燃物品
-		艾草：易燃物品
+	容器包含物体和容器
+	几个同类型并且相距较近的物体组合成容器（几个，一片，树林，森林）
+	有的容器包含描述，有的描述所包含的物体
+	物体描述受环境以及自身状态影响：环境主要为天气？（晴天，雨天，白天黑夜，寒冷，炎热，
+	normal：树林静静悄悄的。
+	rain：雨水打在树叶上，哗啦啦的响着
+	snow：树上积满了雪，一片雪白
+	console农场：
+	几块可种植的土地，一袋种子（随机），一个农民（你），一栋屋子（一个厨房，一个地下储藏室，一个储物间，一间卧室）
+	更简单化：
+	几块可种植土地，一袋随机种子，一个农民（你），一口井，一个水缸（存水），
+		屋子【一个卧室（睡觉），一个厨房（将食物变为熟食或将冷食加热），一个储藏室（存放农产品等）】，
+		一个探索地（可选择探索，可发现种子），
+		一辆牛车（可装载货物），
+		农产品收购点，种子售卖点
+		工具：
+			锄头：锄草，开荒
+			水桶：打水，灌溉
+			水瓢：装水，灌溉
+			锅：装东西，可被加热
+			灶台：放置锅，将热量集中上升
+			打火石：可点燃易燃物品
+			火绳：易燃物品
+			艾草：易燃物品
 
-基本：可种植土地
-植物：
-小麦：
-作用关系：
-	阳光：光合作用，存储能量，消耗水
-	自身：生长：消耗水和矿物质
-	雨水：存储水，降雨量多大导致呼吸反应降低，降低生长作用，同时随机概率（概率=(rand()*sec*rang(rainfall))>?造成植物受伤
-	风：随机概率造成植物受损
+	基本：可种植土地
+	植物：
+	小麦：
+	作用关系：
+		阳光：光合作用，存储能量，消耗水
+		自身：生长：消耗水和矿物质
+		雨水：存储水，降雨量多大导致呼吸反应降低，降低生长作用，同时随机概率（概率=(rand()*sec*rang(rainfall))>?造成植物受伤
+		风：随机概率造成植物受损
 
-天气作用关系：
-	太阳&月亮：受时间影响
-	阳光&月光：受太阳&月亮与积云影响，积云密度随机减弱，遮蔽光线（随机性n秒产生一次）
-	环境光：受太阳&月亮与积云影响，积云密度随机减弱环境光
-	雨：受积云影响，积云密度随机导致降雨，降雨发生后积云密度随机导致雨停
-	风：受季节，时间影响，n秒随机一次，产生后随机停止
-	积云：受季节，时间影响，随机性同风
-	温度：受光，积云，雨，风，季节，时间影响
-天气块：
-	不包含太阳&月亮
-	其它因素增加所受影响：相邻天气块的相同因素诱使其同化
-'''
+	天气作用关系：
+		太阳&月亮：受时间影响
+		阳光&月光：受太阳&月亮与积云影响，积云密度随机减弱，遮蔽光线（随机性n秒产生一次）
+		环境光：受太阳&月亮与积云影响，积云密度随机减弱环境光
+		雨：受积云影响，积云密度随机导致降雨，降雨发生后积云密度随机导致雨停
+		风：受季节，时间影响，n秒随机一次，产生后随机停止
+		积云：受季节，时间影响，随机性同风
+		温度：受光，积云，雨，风，季节，时间影响
+	天气块：
+		不包含太阳&月亮
+		其它因素增加所受影响：相邻天气块的相同因素诱使其同化
+	'''
 date=0;
 year=0;
 clock=0;
@@ -567,59 +582,70 @@ class Scale:
 				return s
 		return Scale.scales[-1]
 '''
-data script:
-weather describe:
-	describe order
-	i.e:
-		sun,moon,rain,temperature,wind,snow
-	简单描述
-	详细描述
-	更详细描述
-	。。。
-	level0:
-	太阳&月亮：
-		参数：
-		角度：0,0.25,0.5,0.75,1.0
-	阳光&月光：
-		亮度：l0,l1,..ln
-	环境光：
-		亮度：l0,l1,..ln
+	data script:
+	weather describe:
+		describe order
+		i.e:
+			sun,moon,rain,temperature,wind,snow
+		简单描述
+		详细描述
+		更详细描述
+		。。。
+		level0:
+		太阳&月亮：
+			参数：
+			角度：0,0.25,0.5,0.75,1.0
+		阳光&月光：
+			亮度：l0,l1,..ln
+		环境光：
+			亮度：l0,l1,..ln
 
-	雨：
-		雨量：l0..ln
-	风：
-		风向：东，西，南，北，东南，西北，东北，西南
-		风速：l0..ln
-	积云：
-		密度：l0..ln
-	雷声：
-		小，中，大
-		沉闷，响亮
-	闪电：
-		小，中，大。。。
-	温度：
-		极冷，冷，寒。。。极热
-	雨淅淅沥沥的下着，风轻轻吹动，云层灰蒙蒙的，太阳挂在天上，阳光柔和，天气有些冷。
-	简单：
-	描述必须描述以及偏离正常值的数据：
-	雨，雷，闪电，过冷或过热，较大的风，光线过强或过弱，积云浓厚
-	匹配：寻找最多的匹配，将剩余的继续寻找最多的匹配，
-	level1:
+		雨：
+			雨量：l0..ln
+		风：
+			风向：东，西，南，北，东南，西北，东北，西南
+			风速：l0..ln
+		积云：
+			密度：l0..ln
+		雷声：
+			小，中，大
+			沉闷，响亮
+		闪电：
+			小，中，大。。。
+		温度：
+			极冷，冷，寒。。。极热
+		雨淅淅沥沥的下着，风轻轻吹动，云层灰蒙蒙的，太阳挂在天上，阳光柔和，天气有些冷。
+		简单：
+		描述必须描述以及偏离正常值的数据：
+		雨，雷，闪电，过冷或过热，较大的风，光线过强或过弱，积云浓厚
+		匹配：寻找最多的匹配，将剩余的继续寻找最多的匹配，
+		level1:
 
-'''
+	'''
 class Util:
 	@staticmethod
 	def inrange(rang,data):
 		return data >= rang[0] and data <= rang[1]
-class Cloud:
+class Cloud(object):
 	cloud_scale={
 		Scale.mini:1.0,
 		Scale.small:2.0,
 		Scale.middle:3.0,
 		Scale.big:5.0
 	}
-	def __init__(self):
-		self.rate=0.0 # [0,1]
+	def __setattr__(self,attr,data):
+		if attr!='quality' and attr!='crowd':
+			object.__setattr__(self,attr,data)
+			return;
+		if data<0.0 or data>1.0:
+			raise Exception("Error try set "+attr+" no in range[0,1]: "+str(data))
+		self.map[attr]=data
+	def __getattr__(self,attr):
+		if attr!='quality' and attr!='crowd':
+			return object.__getattr__(self,attr,data)
+		return self.map[attr]
+	def __init__(self,crowd=0.0,quality=1.0):
+		self.map ={'crowd':crowd,'quality':quality};
 '''
 	1lux=1lm/平方米=1cd×sr/平方米
 	lx=lux
@@ -647,14 +673,8 @@ class Cloud:
 	可见，从点光源发出的光照度是遵守平方反比律的。
 	1 lx大约等于1烛光在1米距离的照度，我们在摄像机参数规格中常见的最低照度（MINIMUM.ILLUMINATION），表示该摄像机只需在所标示的LUX数值下，即能获取清晰的影像画面，此数值越小越好，说明CCD的灵敏度越高。同样条件下，黑白摄像机所需的照度远比尚须处理色彩浓度的彩色摄像机要低10倍。
 	一般情况：夏日阳光下为100，000 lx；阴天室外为10000 lx；室内日光灯为100 lx；距60W台灯60CM桌面为300lx；电视台演播室为1000 lx；黄昏室内为10 lx；夜间路灯为0.1 lx；烛光搜索（20CM远处）10～15 lx。
-'''
+	'''
 class Light:
-	sun_scale={
-		Scale.mini:1.0,
-		Scale.small:2.0,
-		Scale.middle:3.0,
-		Scale.big:5.0
-	}
 	sun_season={
 		Time.spring:0.7,
 		Time.summer:0.85,
@@ -667,29 +687,98 @@ class Light:
 		Time.autumn:0.7,
 		Time.winter:0.8
 	}
-	def sunshine(self,angle,cloud,season):
-		maxlight=(1-cloud)*self.sun_season[season]*126800.0;
-		return maxlight*(1.0-2*abs(angle*0.8+0.1-0.5))
+	max_sun=1000;#sqrt(126800)=356
+	max_moon=50;# 0.3
+	light_scale={
+		Scale.mini:0.1,
+		Scale.small:10.0,
+		Scale.middle:300.0,
+		Scale.big:900.0
+	}
+	@staticmethod
+	def season_max_sun(time):
+		season=time.season()
+		return Time.sun_season[season]*Time.max_sun;
+	@staticmethod
+	def season_max_moon(time):
+		season=time.season()
+		return Time.moon_season[season]*Time.max_moon;
+	@staticmethod
+	def angle_max_light(angle,max_lights):
+		if angle is None or angle<0.1 or angle>0.9:return 0;
+		return max_lights*(1.0-2*abs(angle*0.8+0.1-0.5))
+	@staticmethod
+	def angle_max_sun(time):
+		angle=time.sun_angle()
+		return Time.angle_max_light(angle,Time.season_max_sun(time))
+	@staticmethod
+	def angle_max_moon(time):
+		angle=time.moon_angle()
+		return Time.angle_max_light(angle,Time.season_max_moon(time))
+	"""
+		定义雾霾和积云？
+		雾霾直接作用于环境光
+		积云作用于星光（太阳和月亮），积云的密度和浓度，浓度一定概率上遮蔽星光，密度在遮蔽星光时起作用，造成实际星光衰减
+		星光被遮蔽时，环境光受积云密度与浓度影响，浓度越高，环境光越弱
+		星光未被遮蔽时，星光即为环境光，但也受积云浓度和密度较小的影响
+		设定输出方程：
+			start_light: >=0
+			cloud_quality: 0 to 1
+			cloud_crowd: 0 to 1
+			x_light=start_light*(cloud_quality-1)**2
+			or x_light=start_light*-(cloud_quality-1)**3
+			left_light=start_light*(cloud_crowd-1)**2
+			light=x_light+left_light
+		"""
+	@staticmethod
+	def weather_light(light,weather):
+		x_light=light*weather.cloud.crowd*(1-weather.cloud.quality)**3
+		left_light=light*(1-weather.cloud.crowd)**2
+		return x_light+left_light;
+	@staticmethod
+	def sunshine(time,weather):
+		light=Time.angle_max_sun(time)
+		return Time.weather_light(light,weather)
+	@staticmethod
+	def moonlight(time,weather):
+		light=Time.angle_max_moon(time)
+		return Time.weather_light(light,weather)
+	@staticmethod
+	def envlight(time,weather):
+		return Time.moonlight(time,weather)+Time.sunshine(time,weather)
 
-	def moonlight(self,angle,cloud,season):
-		maxlight=(1-cloud)*self.moon_season[season]*0.3;
-		return maxlight*(1.0-2*abs(angle*0.8+0.1-0.5))
-	def envlight(self,startlight,light_able):
+'''
+雨根据云层浓度随机产生
+'''
+class Rain:
+	def __init__(self):
 		pass
-		"""
-		light_able==false:
-			startlight*0.?
-		else:
-			startlight*0.9?
-		"""
+'''
+风根据季节，温度，时间，云层随机产生，风向也随机
+'''
+class Timer:
+	@staticmethod
+	def sub_sec(date0,clock0,date1,clock1):
+		return (date1-date0)*24*3600+clock1-clodk0
+	def diff(self):
+		time=self.time 
+		return self.sub_sec(self.date,self.clock,time.date,time.clock)
+	def __init__(self,time):
+		self.time=time
+		self.date=time.date
+		self.clodk=time.clock
+	def update(self):
+		self.date=time.date
+		self.clock=time.clock
+class Wind(Timer):
+	def vector(self):
+		return np.array([1,1])
+	def power(self):
+		return np.random.rand(1)[0]
+	def __init__(self):
+		pass
 class Weather:
 	rain_scale={
-		Scale.mini:1.0,
-		Scale.small:2.0,
-		Scale.middle:3.0,
-		Scale.big:5.0
-	}
-	cloud_scale={
 		Scale.mini:1.0,
 		Scale.small:2.0,
 		Scale.middle:3.0,
@@ -701,27 +790,9 @@ class Weather:
 		Scale.middle:3.0,
 		Scale.big:5.0
 	}
-	sun_scale={
-		Scale.mini:1.0,
-		Scale.small:2.0,
-		Scale.middle:3.0,
-		Scale.big:5.0
-	}
-	moon_scale={
-		Scale.mini:1.0,
-		Scale.small:2.0,
-		Scale.middle:3.0,
-		Scale.big:5.0
-	}
-	light_scale={
-		Scale.mini:1.0,
-		Scale.small:2.0,
-		Scale.middle:3.0,
-		Scale.big:5.0
-	}
-	clouds=0.0
+	cloud=Cloud()
 	def __init__(self):
-		self.cloud=0.0 #[0,1]
+		self.cloud=Cloud()
 
 class Time:
 	spring="spring"
@@ -738,12 +809,18 @@ class Time:
 		autumn:(12+7,24+6),
 		winter:(12+7,24+6)}
 	@staticmethod
+	def sun_angle(self):
+		return Time.day_angle(self.sun_range(self.season()),self.clock);
+	@staticmethod
+	def moon_angle(self):
+		return Time.day_angle(self.moon_range(self.season()),self.clock);
+	@staticmethod
 	def day_angle(rang,clock):
 		_hour=clock/3600.0
-		if Util.inrange(rang,clock):
-			return (clock-rang[0])/(rang[1]-rang[0])
-		elif Util.inrange(rang,clock+24):
-			return (clock+24-rang[0])/(rang[1]-rang[0])
+		if Util.inrange(rang,_hour):
+			return (_hour-rang[0])/(rang[1]-rang[0])
+		elif Util.inrange(rang,_hour+24):
+			return (_hour+24-rang[0])/(rang[1]-rang[0])
 		else:
 			return None
 	def month(self):
@@ -753,7 +830,8 @@ class Time:
 			date-=self.months[cnt]
 			cnt+=1
 		return cnt
-	def vdate(date):
+	def vdate(self):
+		date=self.date
 		cnt=0;
 		while date>0:
 			date-=self.months[cnt]
@@ -771,7 +849,6 @@ class Time:
 
 	def hour(self):
 		return 1.0*self.clock/3600
-
 	def season(self):
 		mon=self.month()
 		if mon<3 or mon==12:
@@ -807,9 +884,6 @@ class Time:
 
 class Demo():
 	pass
-class Weather:
-	def __init__(self):
-		pass
 class Describe:
 	@staticmethod
 	def strcmb(a,b,point="，"):
