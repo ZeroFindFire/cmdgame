@@ -171,6 +171,8 @@ class BatchNormalNet(LinkNet):
 			self.E=self.E*p+mean*(1.0-p)
 			self.Var=self.Var*p+var*(1.0-p)
 			self.cnt+=num
+		self.mean=mean
+		self.var=var
 		self.normal=(ins-mean)/np.sqrt(var+self.epsilon)
 
 	def work(self):
@@ -182,6 +184,24 @@ class BatchNormalNet(LinkNet):
 		self.normalization()
 		self.outs=self.normal*self.gamma+self.beta
 		self.normal=None
+	def learn_normal_RVS(self,rvs):
+		"""
+		tmpvar=1/sqrt(var+epsilon)
+		e=mean
+		dyi/dxi=tmpvar-tmpvar/n-(e-xi)*(e-xi)*tmpvar**3/n
+		dyj/dxi=dyi/dxj=-tmpvar/n-(e-xi)*(e-xj)*tmpvar**3/n
+		Di=rvs[i]*tmpvar-rvs.sum()*tmpvar/n-(e-xi)*tmpvar**3/n*[(e-x)*rvs].sum()
+		"""
+		tmpvar=1.0/np.sqrt(self.var+self.epsilon)
+		ins=self.prev.outs
+		if len(ins.shape)==4:
+			inaxis=(0,2,3)
+		else if len(ins.shape)==2:
+			inaxis=0
+		else:
+			raise Exception("no suitable shape in normal_RVS:"+str(ins.shape))
+		out_rvs=rvs*tmpvar-rvs.mean(axis=inaxis)*tmpvar-(self.mean-ins)*tmpvar**3*((self.mean-ins)*rvs).mean(axis=inaxis)
+		return out_rvs
 	def learn_reverse(self,reverse,first=True,chg_range=0.0,l2c=0.0):
 		if first:
 			self.feedbacks_beta[:]=0
@@ -202,6 +222,7 @@ class BatchNormalNet(LinkNet):
 			self.feedbacks_gamma+=l2c*self.gamma
 			self.feedbacks_beta+=l2c*self.beta
 		out_rvs=self.gamma*reverse
+		out_rvs = self.learn_normal_RVS(out_rvs)
 		self.outs=[]
 		self.normal=None
 		return out_rvs
