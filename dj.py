@@ -755,8 +755,12 @@ class Rain:
 		pass
 '''
 风根据季节，温度，时间，云层随机产生，风向也随机
+定时器：在满足时长条件后调用反馈函数
 '''
 class Timer:
+	@staticmethod
+	def format(date,clock):
+		return (date+clock/(24*3600),clock%(24*3600))
 	@staticmethod
 	def sub_sec(date0,clock0,date1,clock1):
 		return (date1-date0)*24*3600+clock1-clodk0
@@ -770,6 +774,17 @@ class Timer:
 	def update(self):
 		self.date=time.date
 		self.clock=time.clock
+	def inc_sec(self,sec):
+		self.date,self.clock=self.format(self.date,self.clock+sec)
+
+class TimerDev(Timer):
+	def __init__(self,sec):
+		self.distance=sec
+	def Update(self):
+		pass
+	def NextTime(self):
+		return self.format(self.date,self.clock+self.distance)
+
 class Wind(Timer):
 	def vector(self):
 		return np.array([1,1])
