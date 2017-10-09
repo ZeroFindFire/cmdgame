@@ -234,14 +234,14 @@ class Getch:
 	def __call__(self):
 		return self.call()
 import threading
-class InputThread(threading.Thread):
-	def __init__(self,test=False):
+class InputThreadDemo(threading.Thread):
+	def __init__(self,test=False,wait_sec=1):
 		self.gets=[]
 		self.curr=''
 		self.on=True
 		self.cond=threading.Condition()
 		threading.Thread.__init__(self)
-		self.wait_sec=1
+		self.wait_sec=wait_sec
 		self.test=test
 		self.getch=False
 		self.getchar=Getch()
@@ -297,6 +297,86 @@ class InputThread(threading.Thread):
 				return p
 			self.cond.wait(wait_sec)
 			return self.pop()
+class InputThread:
+	def __init__(self,wait_sec=1):
+		self.gets=[]
+		self.curr=''
+		self.cond=threading.Condition()
+		self.wait_sec=wait_sec
+		self.getch=False
+		self.getchar=Getch()
+	def put(self,cts):
+		if len(self.gets)<10:
+			self.gets.append(cts)
+	def pop(self):
+		if len(self.gets)==0:
+			return None
+		cts=self.gets[0]
+		del self.gets[0]
+		return cts
+	@staticmethod
+	def thrun(self):
+		if self.getch:
+			ch=self.getchar() 
+		else:
+			ch=sys.stdin.readline()[:-1]
+		self.curr=ch
+		with self.cond:
+			self.notify=True
+			self.cond.notify()
+			self.put(ch)
+	def wait_time(self,wait_sec=None):
+		if wait_sec is None:
+			return self.wait_sec
+		else:
+			self.wait_sec=wait_sec
+	def stop(self):
+		self.on=False
+	def single_start(self,getch=False):
+		self.getch=getch
+		tmpthd=threading.Thread(target=InputThread.thrun, args=(self,))
+		tmpthd.start()
+	def input(self,time_out=True):
+		wait_sec=self.wait_sec
+		if time_out==False:
+			wait_sec=None
+		with self.cond:
+			self.notify=False
+			p=self.pop()
+			if p is not None:
+				return p
+			self.cond.wait(wait_sec)
+			return self.pop()
+class MainDemo(InputThread):
+	def __init__(self,waittime=1):
+		InputThread.__init__(self,wait_sec=waittime)
+	def update(self,gets):
+		print "demo",gets
+	def init(self):
+		print "init"
+	def finish(self):
+		print "finish"
+	def stop(self):
+		self.running=False
+	def run(self,auto_continue=True):
+		self.init()
+		self.running=True
+		crt=True
+		get=None
+		while self.running:
+			self.update(get)
+			if auto_continue:
+				if crt:
+					self.single_start(getch=True);
+				get=InputThread.input(self)
+				if get is None:
+					crt=False
+					continue
+				crt=True
+			sys.stdout.write(":")
+			self.single_start(getch=False)
+			get=InputThread.input(self,time_out=False)
+		self.finish()
 def test():
 	ins=InputThread(True)
 	ins.start()
@@ -572,6 +652,9 @@ rain_small=2.0
 rain_middle=5.0
 rain_big=10.0
 rain_huge=20.0
+class Time:
+	spring,summer,autumn,winter=0,1,2,3
+
 class Scale:
 	mini,small,middle,big,huge="mini","small","middle","big","huge"
 	scales=["mini","small","middle","big","huge"]
