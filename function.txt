@@ -1,0 +1,3 @@
+light ~= sun, moon, cloud, season, time
+
+sun = max_season_sun[seaon] * angle_of_time(time) * func(cloud.crowd,cloud.quality)
