@@ -1,5 +1,6 @@
 #coding=utf-8
 from input import MainDemo as Main
+from actor import *
 import numpy as np
 class Demo(Main):
 	def __init__(self):
@@ -19,29 +20,20 @@ class Demo(Main):
 		print "Count:", self.cnt
 class Food:
 	pass
-class Value(object):
-	def __init__(self,max):
-		self._max=max*1.0
-		self._curr=max*1.0
-	def __call__(self, val = None):
-		if val is None:
-			return self._curr
-		else:
-			self._curr = val*1.0
-	def rate():
-		return self._curr/self._max
-	def max(self, val = None):
-		if val is None:
-			return self._max
-		else:
-			self._max = val*1.0
-	def full(self):
-		return self._max
+def normal(v):
+	l = np.sqrt((v**2).sum())
+	if l != 0.0:
+		l = 1.0 / l
+	return v * l
 class Alive:
-	def __init__(self,pos):
+	def __init__(self, pos):
 		self.pos = pos
 		self.hurt = 0.0
 		self.life = Value(10)
 		self.power = Value(10)
-		self.move = np.zeros(2)
+		self.move = np.zeros(pos.shape)
+	def move(self, aim):
+		to = aim - self.pos
+		to = normal(to)
+		self.move = to
 	
