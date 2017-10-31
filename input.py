@@ -70,15 +70,14 @@ class Getch:
 class InputThread:
 	def __init__(self,wait_sec=1):
 		self.gets=[]
-		self.curr=''
 		self.cond=threading.Condition()
 		self.wait_sec=wait_sec
 		self.getch=False
 		self.getchar=Getch()
-	def put(self,cts):
+	def __put(self,cts):
 		if len(self.gets)<10:
 			self.gets.append(cts)
-	def pop(self):
+	def __pop(self):
 		if len(self.gets)==0:
 			return None
 		cts=self.gets[0]
@@ -88,15 +87,15 @@ class InputThread:
 		return self.input(time_out)
 	@staticmethod
 	def thrun(self):
+		#print "thread start:",threading.currentThread().ident
 		if self.getch:
 			ch=self.getchar() 
 		else:
 			ch=sys.stdin.readline()[:-1]
-		self.curr=ch
 		with self.cond:
-			self.notify=True
+			self.__put(ch)
 			self.cond.notify()
-			self.put(ch)
+		#print "thread end:",threading.currentThread().ident
 	def wait_time(self,wait_sec=None):
 		if wait_sec is None:
 			return self.wait_sec
@@ -109,20 +108,44 @@ class InputThread:
 		tmpthd=threading.Thread(target=InputThread.thrun, args=(self,))
 		tmpthd.start()
 	def input(self,time_out=True):
+		#print "ingets:",self.gets
 		wait_sec=self.wait_sec
 		if time_out==False:
 			wait_sec=None
+		out = None
 		with self.cond:
-			self.notify=False
-			p=self.pop()
+			p=self.__pop()
 			if p is not None:
-				return p
-			self.cond.wait(wait_sec)
-			return self.pop()
+				out = p
+			else:
+				self.cond.wait(wait_sec)
+				out = self.__pop()
+		return out
 # 主架构，循环获取按键输入
 class MainDemo(InputThread):
+	def push(self,new_update,auto_ct = None,readline = None):
+		self.__updates.append((self.update,self.auto_continue(),self.readline()))
+		self.update = new_update
+		if auto_ct is not None:
+			self.auto_continue(auto_ct)
+		if readline is not None:
+			self.readline(readline)
+		self.update(None)
+	def pop(self):
+		if len(self.__updates) == 0 :
+			return
+		out = self.__updates.pop()
+		self.update = out[0]
+		self.auto_continue(out[1])
+		self.readline(out[2])
+		self.update(None)
+	def clear_updates(self):
+		self.__updates = []
 	def __init__(self,waittime=1):
 		InputThread.__init__(self,wait_sec=waittime)
+		self.__auto_continue = True
+		self.__readline = True
+		self.__updates = []
 	def update(self,gets):
 		print "demo",gets
 	def init(self):
@@ -131,14 +154,27 @@ class MainDemo(InputThread):
 		print "finish"
 	def stop(self):
 		self.running=False
-	def run(self,auto_continue=True):
+	def readline(self, tf = None):
+		if tf is None:
+			return self.__readline
+		else:
+			self.__readline = tf
+	def auto_continue(self,tf = None):
+		if tf is None:
+			return self.__auto_continue
+		else:
+			self.__auto_continue = tf
+	def run(self):
+		#print "main start:",threading.currentThread().ident
 		self.init()
 		self.running=True
 		crt=True
 		get=None
 		while self.running:
 			self.update(get)
-			if auto_continue:
+			if not self.running:
+				break
+			if self.__auto_continue:
 				if crt:
 					self.single_start(getch=True);
 				get=InputThread.input(self)
@@ -146,7 +182,12 @@ class MainDemo(InputThread):
 					crt=False
 					continue
 				crt=True
-			sys.stdout.write(":")
-			self.single_start(getch=False)
-			get=InputThread.input(self,time_out=False)
+			if self.__readline:
+				sys.stdout.write(":")
+				self.single_start(getch=False)
+				get=InputThread.input(self,time_out=False)
 		self.finish()
+		#print "main end:",threading.currentThread().ident
+	def __call__(self):
+		self.run()
+		

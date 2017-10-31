@@ -19,7 +19,7 @@ class Value(object):
 			value = max(value, self._min)
 			self._curr = min(value, self._curr)
 			self._max = value
-		if name = 'min':
+		if name == 'min':
 			value = min(value, self._max)
 			self._curr = max(value, self._curr)
 			self._min = value

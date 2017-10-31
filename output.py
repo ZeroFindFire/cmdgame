@@ -1,7 +1,24 @@
 #coding=utf-8
 import sys
 Coding='utf-8'
-def show(context,step=1,wait=0.1,decode=True,coding=None):
+import os
+import platform
+ossys=platform.system()
+def cls():
+	if ossys=="Windows":
+		os.system("cls")
+	else:
+		os.system("clear")
+
+def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True):
+	if clean:
+		cls()
+	if isinstance(context,list) or isinstance(context,tuple):
+		tmp = ""
+		for ct in context:
+			tmp+=ct+"\n"
+		context = tmp[:-1]
+	context += '\n'
 	from time import sleep
 	if decode:
 		if coding is not None:
