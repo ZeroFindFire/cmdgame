@@ -2,6 +2,9 @@
 from setting import *
 from random import random
 import numpy as np
+from zmath import *
+from algorithm import *
+from order import *
 def f(flt,p=2):
 	sp = "%."+str(p)+"f"
 	return sp % flt
@@ -19,15 +22,17 @@ class SObj(object):
 		self.__pos = ps
 	def __getattr__(self,name):
 		if name != 'pos' and name != 'abspos':
-			return object.__getattr__(self,name,data)
+			return object.__getattribute__(self,name)
 		if name == 'abspos':
 			return self.__pos * self.spc.size
 		return self.__pos
 
 class Space(SObj):
 	ID = 0
-	def __init__(self, up, size, pos, chds = 0):
-		SObj.__init__(self,up,size)
+	def __init__(self, up, size, pos, chds = 0, pos_up = None):
+		if pos_up is None:
+			pos_up = vec_empty()
+		SObj.__init__(self,up,pos)
 		self.size = size
 		self.chds = []
 		self.id = Space.ID
@@ -35,28 +40,29 @@ class Space(SObj):
 		self.objs = []
 		if size < 20:return;
 		for i in xrange(int(chds*0.1)):
-			spc = Space(self, max(random()*0.1*size,10),np.random.rand(2),int(random() * chds / 2))
+			spc = Space(self, max(random()*0.1*size,10),vec_rand(),int(random() * chds / 2))
 			self.chds.append(spc)
 	def state(self):
 		s = []
 		for spc in self.chds:
-			ps = spc.__pos * self.size
+			ps = spc.pos * self.size
 			s.append( "空间%d位于(%.2f,%.2f)处，占地%.3fx%.3f"%(spc.id,ps[0],ps[1],spc.size,spc.size))
 		for obj in self.objs:
 			s.append(obj.state())
 		return s
 	def near(self,obj,dst):
-		s = []
+		spcs = []
+		objs = []
 		pos = obj.abspos
 		for spc in self.chds:
 			ps = spc.abspos
 			if np.sqrt(((ps-pos)**2).sum())<dst:
-				s.append( "空间%d位于(%.2f,%.2f)处，占地%.3fx%.3f"%(spc.id,ps[0],ps[1],spc.size,spc.size))
+				spcs.append(spc)
 		for obj in self.objs:
 			ps = obj.abspos
 			if np.sqrt(((ps-pos)**2).sum())<dst:
-				s.append(obj.state())
-		return s
+				objs.append(obj)
+		return (objs,spcs)
 
 	def update(self,sec):
 		for obj in self.objs:
@@ -65,11 +71,7 @@ class Space(SObj):
 			spc.update(sec)
 	def insert(self,obj):
 		self.objs.append(obj)
-def normal(vc):
-	l = np.sqrt((vc**2).sum())
-	if l != 0.0:
-		l = 1.0 / l
-	return vc*l
+
 def strvec(vec):
 	s = "("
 	for v in vec:
@@ -77,18 +79,7 @@ def strvec(vec):
 		s+=", "
 	s = s[:-2]+")"
 	return s
-def zsort(datas, prior):
-	l = len(datas)
-	for i in xrange(l):
-		id = i 
-		for j in xrange(i,l):
-			if prior(datas[j],datas[id]):
-				id = j 
-		if id != i:
-			tmp = datas[id]
-			datas[id] = datas[i]
-			datas[i] = tmp
-	return datas 
+
 class PosPrior:
 	def __init__(self,obj):
 		self.pos = obj.pos
@@ -99,31 +90,55 @@ class PosPrior:
 		lb = ((self.pos - pb) ** 2).sum()
 		return la <= lb
 class LinkObj(SObj):
-	#self.nspcs,nobjs = 10
+	def __init__(self,*args):
+		SObj.__init__(self,*args)
+		self.spcs = []
+		self.objs = []
 	nspcs = 10
 	nobjs = 10
+	# objs初始为空
+	# 每次update，清除已经远离的obj，随机概率清除obj
+	lv_dst = 100.0
+	lv_rate = 0.1
+	is_rate = 0.5
+	def lnk(self,obj):
+		if obj in self.objs:return;
+		self.objs.append(obj)
+		obj.objs.append(self)
+	def unlnk(self,obj):
+		if not obj in self.objs:return;
+		self.objs.remove(obj)
+		obj.objs.remove(self)
+	def __prev_update(self):
+		for obj in self.objs:
+			if sqrdst(self.pos - obj.pos) > self.lv_dst**2 or random()<self.lv_rate:
+				self.unlnk(obj)
+		for spc in self.spcs:
+			if sqrdst(self.pos - spc.pos) > self.lv_dst**2 or random()<self.lv_rate:
+				self.spcs.remove(spc)
 	def update_lnk(self, objs, spcs ):
 		pr = PosPrior(self)
 		objs = zsort(objs, pr)
 		spcs = zsort(spcs, pr)
-		n = self.nobjs - len(self.objs):
+		self.__prev_update()
+		n = self.nobjs - len(self.objs)
 		i = 0 
 		l = len(objs)
 		while n > 0 and i < l and n > (l - i):
-			if random()>0.5 and not objs[i] in self.objs:
-				self.objs.append(objs[i])
+			if random()>self.is_rate and not objs[i] in self.objs:
+				self.lnk(objs[i])
 				n-=1
 			i+=1
 		for obj in objs:
 			if n == 0 :break
 			if not obj in self.objs:
-				self.objs.append(obj)
+				self.lnk(obj)
 				n-=1
-		n = self.nspcs
+		n = self.nspcs - len(self.spcs)
 		i = 0 
 		l = len(spcs)
 		while n > 0 and i < l and n > (l - i):
-			if random()>0.5 and not spcs[i] in self.spcs:
+			if random()>self.is_rate and not spcs[i] in self.spcs:
 				self.spcs.append(spcs[i])
 				n-=1
 			i+=1
@@ -132,71 +147,104 @@ class LinkObj(SObj):
 			if not spc in self.spcs:
 				self.spcs.append(spc)
 				n-=1
+		self.objs = zsort(self.objs,pr)
+		self.spcs = zsort(self.spcs,pr)
 class Alive(LinkObj):
 	def __init__(self, spc, pos, v, name = ''):
-		SObj.__init__(self,spc,pos)
+		LinkObj.__init__(self,spc,pos)
 		self.v = v
 		self.move = np.zeros(2)
 		self.name = name
 		self.clock = 0
 	def update(self,sec):
+		objs,spcs = self.spc.near(self,self.lv_dst)
+		self.update_lnk(objs,spcs)
 		if self.name != "你":
 			self.clock += sec
 			if self.clock > 10:
-				self.move = normal(np.random.rand(2))
+				self.move = normal(vec_rand()-0.5)
 				self.clock = 0
-		self.__pos += 1.0 * sec * self.move * self.v / self.spc.size
+		self.pos += 1.0 * sec * self.move * self.v / self.spc.size
 	def state(self):
-		s = self.name + "在空间"+str(self.spc.id)+"里，坐标为"+strvec(self.pos * self.spc.size)
+		s = self.name + "在空间" + str(self.spc.id)+"里，坐标为"+strvec(self.pos * self.spc.size)
 		if (self.move**2).sum()!=0:
 			s+="，正在向"+strvec(self.move)+"方向移动"
 		return s
+	def view(self):
+		s = []
+		for spc in self.spcs:
+			ps = spc.abspos
+			s.append( "空间%d位于(%.2f,%.2f)处，占地%.2fx%.2f"%(spc.id,ps[0],ps[1],spc.size,spc.size))
+		for obj in self.objs:
+			s.append(obj.state())
+		return s
+class RDExcept(Exception):
+	pass
 class RunDemo(SettingDemo):
 	def __init__(self,*args):
 		SettingDemo.__init__(self,*args)
 		self.cnt = 0
+		self.__enter = True
 		self.space = Space(None, 1000, None, 2**5)
-		self.player = Alive(self.space, np.array([0,0]),5.0,"你")
+		self.player = Alive(self.space, vec_empty(),5.0,"你")
 		for i in xrange(10):
-			self.space.insert(Alive(self.space, np.random.rand(2),5.0,"robot"+str(i)))
-	def move(self,gets):
+			self.space.insert(Alive(self.space, vec_rand(),5.0,"robot"+str(i)))
+	def __move(self,gets):
 		p = self.player
 		if gets == 'a':
-			p.move = np.array([-1,0])
+			p.move = Move.left()
 		elif gets == 'd':
-			p.move = np.array([1,0])
+			p.move = Move.right()
 		elif gets == 'w':
-			p.move = np.array([0,1])
+			p.move = Move.up()
 		elif gets == 's':
-			p.move = np.array([0,-1])
+			p.move = Move.down()
 		elif gets == 'p':
-			p.move = np.zeros(2)
-	def update_run(self,gets):
-		self.move(gets)
-		self.auto_continue(True)
-		self.readline(False)
-		s = self.space.near(self.player,100)
-		if gets == "e":
+			p.move = vec_empty()
+	def __show(self):
+		show(self.__s,step = 0)
+	def __out(self):
+		raise RDExcept("")
+	def __turnon(self, tf = None):
+		if tf is None:
+			return self.__enter
+		if tf and not self.__enter:
+			self.auto_continue(False)
+			self.readline(True)
+			self.__enter = True
+		if not tf and self.__enter:
+			self.auto_continue(True)
+			self.readline(False)
+			self.__enter = False
+
+	def __order(self,gets):
+		if gets == "exit":
 			self.stop()
-		elif gets == "-":
-			self.cnt-=1
+			self.__out()
+		elif gets == ":":
+			self.__turnon(True)
+		elif gets == 'detail':
+			self.__s += self.space.state()
+			self.__turnon(True)
 		elif gets == "set":
 			self.push(self.update_setting,False,True)
-			return
-		elif gets == "+":
-			self.cnt+=1
-		elif gets == "r":
-			self.pop()
-			return;
-		elif gets == 'x':
-			s = self.space.state()
-			self.auto_continue(False)
-			self.readline(True)
-		elif gets == ":":
-			self.auto_continue(False)
-			self.readline(True)
+			raise RDExcept()
+		else:
+			self.__move(gets)
+	def __update(self,gets):
+		self.__s =[]
+		self.__turnon(False)
+		s = [self.player.state()]+self.player.view()
+		self.__s = s
+		self.__order(gets)
 		self.space.update(self.wait_time())
 		self.player.update(self.wait_time())
-		s = [self.player.state()]+s
-		show(s,step = 0)
-		#show("计数: "+str(self.cnt),step = 0)
+		self.__s = s
+	def update_run(self,gets):
+		try:
+			self.__update(gets)
+		except RDExcept,e:
+			return
+		self.__show()
+
+
