@@ -9,6 +9,7 @@ def f(flt,p=2):
 	sp = "%."+str(p)+"f"
 	return sp % flt
 class SObj(object):
+	manage_maps = ['pos','abspos','up','spc','space']
 	def __init__(self,up,pos):
 		self.__pos = np.asarray(pos,dtype = np.float64)
 		self.spc = up
@@ -26,15 +27,24 @@ class SObj(object):
 		if name == 'abspos':
 			return self.__pos * self.spc.size
 		return self.__pos
+	@staticmethod
+	def chk_range(pos):
+		return np.maximum(np.minimum(pos,1),-1)
 
 class Space(SObj):
 	ID = 0
+	def __abspos(self,pos):
+		return pos * self.size
 	def __init__(self, up, size, pos, chds = 0, pos_up = None):
 		if pos_up is None:
 			pos_up = vec_empty()
+		self.up_pos = self.chk_range(pos_up)
 		SObj.__init__(self,up,pos)
 		self.size = size
 		self.chds = []
+		self.spc_map = {}
+		if up is not None:
+			self.spc_map[up.id]=up
 		self.id = Space.ID
 		Space.ID+=1
 		self.objs = []
@@ -42,23 +52,30 @@ class Space(SObj):
 		for i in xrange(int(chds*0.1)):
 			spc = Space(self, max(random()*0.1*size,10),vec_rand(),int(random() * chds / 2))
 			self.chds.append(spc)
+			self.spc_map[spc.id]=spc
 	def state(self):
 		s = []
 		for spc in self.chds:
-			ps = spc.pos * self.size
+			ps = spc.abspos
 			s.append( "空间%d位于(%.2f,%.2f)处，占地%.3fx%.3f"%(spc.id,ps[0],ps[1],spc.size,spc.size))
+		if self.spc is not None:
+			spc = self.spc 
+			ps = self.__abspos(self.up_pos)
+			s.append( "母空间%d位于(%.2f,%.2f)处，占地%.3fx%.3f"%(spc.id,ps[0],ps[1],spc.size,spc.size))
 		for obj in self.objs:
 			s.append(obj.state())
 		return s
 	def near(self,obj,dst):
 		spcs = []
 		objs = []
+		crr = obj
 		pos = obj.abspos
 		for spc in self.chds:
 			ps = spc.abspos
 			if np.sqrt(((ps-pos)**2).sum())<dst:
 				spcs.append(spc)
 		for obj in self.objs:
+			if obj == crr:continue;
 			ps = obj.abspos
 			if np.sqrt(((ps-pos)**2).sum())<dst:
 				objs.append(obj)
@@ -71,7 +88,18 @@ class Space(SObj):
 			spc.update(sec)
 	def insert(self,obj):
 		self.objs.append(obj)
-
+	def space(self,id):
+		if self.spc_map.has_key(id) ==False:
+			return None
+		return self.spc_map[id]
+	def apply(self,obj,spc):
+		obj_ps = obj.abspos
+		if spc == self.spc:
+			spc_ps = self.__abspos(self.up_pos)
+		else:
+			spc_ps = spc.abspos
+		dst = sqrdst(obj_ps - spc_ps)
+		return dst < 5**2
 def strvec(vec):
 	s = "("
 	for v in vec:
@@ -153,9 +181,15 @@ class Alive(LinkObj):
 	def __init__(self, spc, pos, v, name = ''):
 		LinkObj.__init__(self,spc,pos)
 		self.v = v
-		self.move = np.zeros(2)
+		self.move = vec_empty()
 		self.name = name
 		self.clock = 0
+	def to_space(self,spc):
+		self.spc.objs.remove(self)
+		self.spc = spc
+		spc.objs.append(self)
+		self.pos = self.spc.up_pos
+
 	def update(self,sec):
 		objs,spcs = self.spc.near(self,self.lv_dst)
 		self.update_lnk(objs,spcs)
@@ -187,6 +221,7 @@ class RunDemo(SettingDemo):
 		self.__enter = True
 		self.space = Space(None, 1000, None, 2**5)
 		self.player = Alive(self.space, vec_empty(),5.0,"你")
+		self.space.insert(self.player)
 		for i in xrange(10):
 			self.space.insert(Alive(self.space, vec_rand(),5.0,"robot"+str(i)))
 	def __move(self,gets):
@@ -202,7 +237,10 @@ class RunDemo(SettingDemo):
 		elif gets == 'p':
 			p.move = vec_empty()
 	def __show(self):
-		show(self.__s,step = 0)
+		show(self.__s,step = 0,clean = False)
+	@staticmethod
+	def show(s):
+		show(s,step=0,clean = False)
 	def __out(self):
 		raise RDExcept("")
 	def __turnon(self, tf = None):
@@ -218,16 +256,42 @@ class RunDemo(SettingDemo):
 			self.__enter = False
 
 	def __order(self,gets):
+		if gets is None:
+			return
+		ords = get_order(gets)
+		if len(ords)==0:return;
+		ords=ords[0]
+
+		gets = ords[0]
 		if gets == "exit":
 			self.stop()
 			self.__out()
 		elif gets == ":":
 			self.__turnon(True)
 		elif gets == 'detail':
-			self.__s += self.space.state()
+			self.__s += self.player.spc.state()
 			self.__turnon(True)
 		elif gets == "set":
 			self.push(self.update_setting,False,True)
+			raise RDExcept()
+		elif gets == "return":
+			self.push(self.update_menu,False,True)
+			raise RDExcept()
+		elif gets == "goto":
+			if len(ords)!=2:
+				return
+			spc_id = int(ords[1])
+			player = self.player
+			spc = player.spc.space(spc_id)
+			if spc is None:
+				self.show("不存在的空间编号")
+				raise RDExcept()
+			jg = player.spc.apply(player,spc)
+			if not jg:
+				self.show("尝试失败")
+				raise RDExcept()
+			player.to_space(spc)
+			self.show("进入空间"+str(spc_id))
 			raise RDExcept()
 		else:
 			self.__move(gets)
@@ -238,7 +302,7 @@ class RunDemo(SettingDemo):
 		self.__s = s
 		self.__order(gets)
 		self.space.update(self.wait_time())
-		self.player.update(self.wait_time())
+		#self.player.update(self.wait_time())
 		self.__s = s
 	def update_run(self,gets):
 		try:
@@ -248,3 +312,6 @@ class RunDemo(SettingDemo):
 		self.__show()
 
 
+"""
+space connect:
+"""

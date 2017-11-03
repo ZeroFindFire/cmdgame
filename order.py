@@ -48,4 +48,3 @@ def get_vec(vec):
 	for c in s:
 		out.append(float(c))
 	return np.array(out)
-
