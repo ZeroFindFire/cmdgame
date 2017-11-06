@@ -126,7 +126,7 @@ class LinkObj(SObj):
 	nobjs = 10
 	# objs初始为空
 	# 每次update，清除已经远离的obj，随机概率清除obj
-	lv_dst = 100.0
+	lv_dst = 100.0**3
 	lv_rate = 0.1
 	is_rate = 0.5
 	def lnk(self,obj):
@@ -214,8 +214,28 @@ class Alive(LinkObj):
 		return s
 class RDExcept(Exception):
 	pass
+class StrShow(object):
+	def __init__(self):
+		self.__s = []
+		pass
+	def cls(self):
+		self.__s = []
+	def insert(self,cts):
+		if isinstance(cts,list):
+			self.__s+=cts
+		else:
+			self.__s.append(cts)
+	def write(self):
+		s = self.__s 
+		show(s, step = 0, clean = True)
+	def __call__(self):
+		self.write()
+	def set(self,cts):
+		self.cls()
+		self.insert(cts)
 class RunDemo(SettingDemo):
 	def __init__(self,*args):
+		self.play_cnt = 0
 		SettingDemo.__init__(self,*args)
 		self.cnt = 0
 		self.__enter = True
@@ -224,6 +244,7 @@ class RunDemo(SettingDemo):
 		self.space.insert(self.player)
 		for i in xrange(10):
 			self.space.insert(Alive(self.space, vec_rand(),5.0,"robot"+str(i)))
+		self.out = StrShow()
 	def __move(self,gets):
 		p = self.player
 		if gets == 'a':
@@ -236,24 +257,15 @@ class RunDemo(SettingDemo):
 			p.move = Move.down()
 		elif gets == 'p':
 			p.move = vec_empty()
-	def __show(self):
-		show(self.__s,step = 0,clean = False)
-	@staticmethod
-	def show(s):
-		show(s,step=0,clean = False)
 	def __out(self):
 		raise RDExcept("")
 	def __turnon(self, tf = None):
 		if tf is None:
 			return self.__enter
-		if tf and not self.__enter:
-			self.auto_continue(False)
-			self.readline(True)
-			self.__enter = True
-		if not tf and self.__enter:
-			self.auto_continue(True)
-			self.readline(False)
-			self.__enter = False
+		if tf ^ self.__enter:
+			self.auto_continue(not tf)
+			self.readline(tf)
+			self.__enter = tf
 
 	def __order(self,gets):
 		if gets is None:
@@ -261,7 +273,6 @@ class RunDemo(SettingDemo):
 		ords = get_order(gets)
 		if len(ords)==0:return;
 		ords=ords[0]
-
 		gets = ords[0]
 		if gets == "exit":
 			self.stop()
@@ -269,7 +280,7 @@ class RunDemo(SettingDemo):
 		elif gets == ":":
 			self.__turnon(True)
 		elif gets == 'detail':
-			self.__s += self.player.spc.state()
+			self.out.insert(self.player.spc.state())
 			self.__turnon(True)
 		elif gets == "set":
 			self.push(self.update_setting,False,True)
@@ -284,34 +295,39 @@ class RunDemo(SettingDemo):
 			player = self.player
 			spc = player.spc.space(spc_id)
 			if spc is None:
-				self.show("不存在的空间编号")
-				raise RDExcept()
+				self.out.set("不存在的空间编号")
 			jg = player.spc.apply(player,spc)
 			if not jg:
-				self.show("尝试失败")
-				raise RDExcept()
+				self.out.set("尝试失败")
 			player.to_space(spc)
-			self.show("进入空间"+str(spc_id))
-			raise RDExcept()
+			self.out.set("进入空间"+str(spc_id))
 		else:
 			self.__move(gets)
 	def __update(self,gets):
-		self.__s =[]
 		self.__turnon(False)
 		s = [self.player.state()]+self.player.view()
-		self.__s = s
+		self.out.insert(s)
 		self.__order(gets)
 		self.space.update(self.wait_time())
-		#self.player.update(self.wait_time())
-		self.__s = s
 	def update_run(self,gets):
+		#self.wait_time(0.2)
+		self.out.insert("CNT: "+str(self.play_cnt)+"		SPF: "+str(self.wait_time())+" sec")
+		self.play_cnt += 1
 		try:
 			self.__update(gets)
+			self.out()
 		except RDExcept,e:
-			return
-		self.__show()
+			pass
+		self.out.cls()
 
-
+#class SpaceTr(Object):
+#	pass 
 """
 space connect:
+space translate: 
+	cost: time, energy, can't move
+楼梯：双向的，
+地名：包含在最大的地名中，最大地名没有向上通道，
+位置传输：有点与范围，在范围内的可以走到另一个地名的点的范围的随机位置上，若范围被占满，则不能走过去
+
 """
