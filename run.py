@@ -225,11 +225,11 @@ class StrShow(object):
 			self.__s+=cts
 		else:
 			self.__s.append(cts)
-	def write(self):
+	def write(self,rd ):
 		s = self.__s 
-		show(s, step = 0, clean = True)
-	def __call__(self):
-		self.write()
+		show(s, step = 0, clean = True,rd=rd)
+	def __call__(self,*args ):
+		self.write(*args )
 	def set(self,cts):
 		self.cls()
 		self.insert(cts)
@@ -311,11 +311,12 @@ class RunDemo(SettingDemo):
 		self.space.update(self.wait_time())
 	def update_run(self,gets):
 		#self.wait_time(0.2)
+		rb = self.__turnon()
 		self.out.insert("CNT: "+str(self.play_cnt)+"		SPF: "+str(self.wait_time())+" sec")
 		self.play_cnt += 1
 		try:
 			self.__update(gets)
-			self.out()
+			self.out(rb)
 		except RDExcept,e:
 			pass
 		self.out.cls()

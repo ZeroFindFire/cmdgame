@@ -10,7 +10,7 @@ class Demo(MenuDemo):
 		show("初始化");
 		self.update = self.update_menu
 	def finish(self):
-		show("清理中...");
+		show("清理中...                                           ",rd=True);
 a = Demo()
 if __name__ == "__main__":
 	a.run()

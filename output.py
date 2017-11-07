@@ -13,14 +13,19 @@ import ctypes
 class COORD(ctypes.Structure):
     _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
 
-STD_OUTPUT_HANDLE= -11
-std_out_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+
+
 cls()
 def top():
-	dwCursorPosition = COORD()
-	dwCursorPosition.X = 0
-	dwCursorPosition.Y = 0
-	ctypes.windll.kernel32.SetConsoleCursorPosition(std_out_handle,dwCursorPosition)
+	if ossys=="Windows":
+		STD_OUTPUT_HANDLE= -11
+		std_out_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+		dwCursorPosition = COORD()
+		dwCursorPosition.X = 0
+		dwCursorPosition.Y = 0
+		ctypes.windll.kernel32.SetConsoleCursorPosition(std_out_handle,dwCursorPosition)
+	else:
+		os.system("clear")
 """
 Linux:
 import curses
@@ -37,7 +42,7 @@ pad.refresh( 0,0, 5,5, 20,75)
 
 """
 old_ctx = None 
-def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True):
+def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True, rd = False):
 	if clean:
 		top()
 	if not isinstance(context,list) and not isinstance(context,tuple):
@@ -72,7 +77,8 @@ def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True):
 					ept += ' '
 				i+=1
 				out.append(ept)
-			out.append("                                    ")
+			if rd:
+				out.append("                                    ")
 		else:
 			l = lc
 			while i < l:
@@ -91,7 +97,7 @@ def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True):
 		if coding is not None:
 			context=context.decode(coding).encode('gbk')
 		else:
-			context=context.decode(Coding).encode('gbk')
+			context=context.decode(coding).encode('gbk')
 	if step == 0:
 		sys.stdout.write(context)
 		return;
@@ -99,19 +105,26 @@ def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True):
 	tp=sys.getfilesystemencoding()
 	i=0
 	index=0
+	s = ''
 	while i < len(context):
 		c=context[i]
 		if c<ct_mx:
-			sys.stdout.write(c)
+			#sys.stdout.write(c)
+			s+=c
 			i+=1
 		else:
 			ct=context[i:i+2]
 			ct=ct.decode('gbk').encode(tp)
-			sys.stdout.write(ct)
+			s+=ct
+			#sys.stdout.write(ct)
 			i+=2
-		if c!= ' ' and step>0 and (index+1) % step == 0:
+		if c!= ' ' and c != '\n' and step>0 and (index+1) % step == 0:
+			sys.stdout.write(s)
+			s = ''
 			sleep(wait)
 		index+=1
+	if s != '':
+		sys.stdout.write(s)
 
 if __name__ == "__main__":
 	show("你好，欢迎使用本输出法...",step = 1, wait=0.2)
