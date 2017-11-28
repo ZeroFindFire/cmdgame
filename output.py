@@ -97,7 +97,7 @@ def show(context,step=1,wait=0.1,decode=True,coding=None,clean=True, rd = False)
 		if coding is not None:
 			context=context.decode(coding).encode('gbk')
 		else:
-			context=context.decode(coding).encode('gbk')
+			context=context.decode(Coding).encode('gbk')
 	if step == 0:
 		sys.stdout.write(context)
 		return;

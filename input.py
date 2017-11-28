@@ -121,60 +121,134 @@ class InputThread:
 				self.cond.wait(wait_sec)
 				out = self.__pop()
 		return out
+class MachineState:
+	def __init__(self,unblock_gets=False,block_gets=False,wait_adjust=False,wait_time=1.0):
+		self.unblock_gets=unblock_gets
+		self.block_gets=block_gets
+		self.wait_adjust=wait_adjust
+		self.wait_time=wait_time
+class CallException(Exception):
+	pass
+# class BaseData:
+# 	pass
+# class BaseDemo:
+# 	def call(self,key):
+# 		self.machine.call(key)
+# 	def done_call(self):
+# 		self.machine.done_call()
+
+# 	def __init__(self,main,data):
+# 		self.machine=main
+# 		self.data=data
+
+# 	# wait for implement:
+
+# 	def update(self,gets,sec):
+# 		print "update demo"
+# 	def init(self):
+# 		print "init demo"
+# 	def finish(self):
+# 		print "finish demo"
+# 	def default_state(self):
+# 		return MachineState(block_gets=True)
+# class RunDemo(BaseDemo):
+# 	def __init__(self,*args):
+# 		BaseDemo.__init__(self,*args)
+# 	def default_state(self):
+# 		return MachineState(block_gets=True)
+# 	def deal_input(self,gets):
+# 		if gets == "exit":
+# 			self.done_call()
+# 		elif gets == "base":
+# 			self.call("base")
+# 		elif gets == "set":
+# 			self.call("setting")
+# 		else:
+# 			return
+# 		raise CallException()
+# 	def update(self,gets,sec):
+# 		self.deal_input(gets)
+# 		print "RunDemo"
+# def run():
+# 	data=BaseData()
+# 	main=MainDemo((data,))
+# 	main.regist("setting",BaseDemo)
+# 	main.regist("run",RunDemo)
+# 	main.call("run")
+# 	main()
 # 主架构，循环获取按键输入
 class MainDemo(InputThread):
-	def push(self,new_update,auto_ct = None,readline = None):
-		self.__updates.append((self.update,self.auto_continue(),self.readline()))
-		self.update = new_update
-		if auto_ct is not None:
-			self.auto_continue(auto_ct)
-		if readline is not None:
-			self.readline(readline)
-		self.update(None)
-	def pop(self):
-		if len(self.__updates) == 0 :
-			return
-		out = self.__updates.pop()
-		self.update = out[0]
-		self.auto_continue(out[1])
-		self.readline(out[2])
-		self.update(None)
-	def clear_updates(self):
-		self.__updates = []
-	def __init__(self,waittime=1):
+	def __init__(self,regist_data=(),waittime=1.0):
 		InputThread.__init__(self,wait_sec=waittime)
-		self.__auto_continue = True
-		self.__readline = True
 		self.__updates = []
-	def update(self,gets):
-		print "demo",gets
+		self.state=MachineState(False,True,False,waittime)
+		self.current_call=None
+		self.call_stack=[]
+		self.regist_map={}
+		self.regist_data=regist_data
+	def regist(self,key,value):
+		self.regist_map[key]=value
+	def call(self,key,state=None):
+		if self.regist_map.has_key(key):
+			if self.current_call is not None:
+				self.call_stack.append((self.current_call,self.state))
+			#regist_data=self.regist_data
+			self.current_call=self.regist_map[key](self,*self.regist_data)
+			if state is None:
+				state=self.current_call.default_state()
+			self.state=state
+			self.wait_time(state.wait_time)
+			self.current_call.init()
+		else:
+			raise Exception("No Such Key on Regist Map by Call: \""+str(key)+"\"")
+	def done_call(self):
+		self.current_call.finish()
+		if len(self.call_stack)==0:
+			self.shutdown()
+			return
+		dt=self.call_stack.pop()
+		self.current_call=dt[0]
+		self.state=dt[1]
+		self.wait_time(self.state.wait_time)
+	def update(self,gets,time):
+		if self.current_call is None:
+			print "main update",gets
+			if gets == "exit":
+				self.shutdown()
+		else:
+			self.current_call.update(gets,time)
 	def init(self):
-		print "init"
+		if self.current_call is None:
+			print "main init"
+		else:
+			self.current_call.init()
 	def finish(self):
-		print "finish"
-	def stop(self):
+		if self.current_call is None:
+			print "main finish"
+		else:
+			self.current_call.finish()
+
+	def shutdown(self):
 		self.running=False
-	def readline(self, tf = None):
-		if tf is None:
-			return self.__readline
-		else:
-			self.__readline = tf
-	def auto_continue(self,tf = None):
-		if tf is None:
-			return self.__auto_continue
-		else:
-			self.__auto_continue = tf
+
 	def run(self):
 		#print "main start:",threading.currentThread().ident
-		self.init()
+		#self.init()
 		self.running=True
 		crt=True
 		get=None
+		import time
+		_tm=time.time()
 		while self.running:
-			self.update(get)
+			_tm=time.time()-_tm
+			try:
+				self.update(get,_tm)
+			except CallException,e:
+				pass
+			_tm=time.time()
 			if not self.running:
 				break
-			if self.__auto_continue:
+			if self.state.unblock_gets:
 				if crt:
 					self.single_start(getch=True);
 				get=InputThread.input(self)
@@ -182,11 +256,14 @@ class MainDemo(InputThread):
 					crt=False
 					continue
 				crt=True
-			if self.__readline:
+			elif self.state.block_gets:
 				sys.stdout.write(":")
 				self.single_start(getch=False)
 				get=InputThread.input(self,time_out=False)
-		self.finish()
+			elif self.state.wait_adjust:
+				import time
+				time.sleep(self.wait_time())
+		#self.finish()
 		#print "main end:",threading.currentThread().ident
 	def __call__(self):
 		self.run()

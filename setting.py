@@ -3,8 +3,8 @@ from basedata import *
 class SettingDemo(BaseDemo):
 	def __init__(self,*args):
 		BaseDemo.__init__(self,*args)
-	def update_setting(self,gets):
+	def update(self,gets,sec):
 		if gets == '1':
-			self.pop()
+			self.done_call()
 			return;
 		show("1，退出")
