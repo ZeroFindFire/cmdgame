@@ -36,11 +36,6 @@ class RunDemo(BaseDemo):
 		BaseDemo.__init__(self,*args)
 		self.cnt = 0
 		self.__enter = True
-		self.space = Space(None, 1000, None, 2**5)
-		self.player = Alive(self.space, vec_empty(),5.0,"你")
-		self.space.insert(self.player)
-		for i in xrange(10):
-			self.space.insert(Alive(self.space, vec_rand(),5.0,"robot"+str(i)))
 		self.out = StrShow()
 	def __move(self,gets):
 		p = self.player
@@ -62,8 +57,6 @@ class RunDemo(BaseDemo):
 		if tf ^ self.__enter:
 			self.mc_state.unblock_gets = not tf
 			self.mc_state.block_gets = tf 
-			# self.auto_continue(not tf)
-			# self.readline(tf)
 			self.__enter = tf
 
 	def run_order(self,gets):
@@ -104,17 +97,15 @@ class RunDemo(BaseDemo):
 			self.__move(gets)
 	def run_update(self,gets):
 		self.__turnon(False)
-		s = [self.player.state()]+self.player.view()
 		self.out.insert(s)
 		self.__order(gets)
-		self.space.update(self.wait_time())
-	def update_run(self,gets):
+	def update(self,gets):
 		#self.wait_time(0.2)
 		rb = self.__turnon()
 		self.out.insert("CNT: "+str(self.play_cnt)+"		SPF: "+str(self.wait_time())+" sec")
 		self.play_cnt += 1
 		try:
-			self.inner_update(gets)
+			self.run_update(gets)
 			self.out(rb)
 		except RDExcept,e:
 			pass
@@ -129,5 +120,38 @@ space translate:
 楼梯：双向的，
 地名：包含在最大的地名中，最大地名没有向上通道，
 位置传输：有点与范围，在范围内的可以走到另一个地名的点的范围的随机位置上，若范围被占满，则不能走过去
+class IO:
+	def __init__(self,mc):
+		self.machine=mc
+	def output(self):
+		print "1,exit\n"
+	def deal_input(self,gets):
+		if gets == "1":
+			self.machine.done_call()
+		else:
+			pass
+		self.call_excpet()
+Player:
+	can obtain tools, has iotools to connect with user
+	iotools should be inheritable or adaptable
+	objs has names and parmaters
+	viewtools: get info of near objs
+	feeltools: get info of self
+	movetools: be moveable
+	iotools: get info of self and nearby
+	slots: connect with tools 
+	adaptertools: maintain tools self
+	inserttools: 
+	thinktools: deal with tools, like iotools
+	battery: contain of powers
+	lines: power trans, info trans
+	encapeslot: put tools, remove tools, power trans, info trans, objs trans, tools list, empty slot number
+		every sec, battery out energy and get left energy
+		view every tools, pwoer nppo, matain
+	buildtools: build things, put objs & energy, out objs
+	burntools: put objs & energy, out energy
+	bagtools: 
+World:
+	Ojbects act
 
 """

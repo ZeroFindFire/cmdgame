@@ -8,3 +8,12 @@ class SettingDemo(BaseDemo):
 			self.done_call()
 			return;
 		show("1，退出")
+
+def IODemo(BaseDemo):
+	def deal_input(self,gets):
+		pass
+	def output(self):
+		return "IODemo"
+	def update(self,gets,sec):
+		self.deal_input(gets)
+		show(self.output())

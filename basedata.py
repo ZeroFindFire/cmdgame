@@ -10,7 +10,8 @@ class BaseDemo:
 		self.machine.call(key)
 	def done_call(self):
 		self.machine.done_call()
-
+	def call_excpet(self):
+		raise CallException(self.__class__.__name__)
 	def __init__(self,main,data):
 		self.machine=main
 		self.data=data

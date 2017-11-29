@@ -18,6 +18,8 @@ class COORD(ctypes.Structure):
 cls()
 def top():
 	if ossys=="Windows":
+		cls()
+		return
 		STD_OUTPUT_HANDLE= -11
 		std_out_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
 		dwCursorPosition = COORD()
